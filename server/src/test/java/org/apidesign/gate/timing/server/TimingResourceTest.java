@@ -28,9 +28,9 @@ public class TimingResourceTest {
         int emptyPort = socket.getLocalPort();
         socket.close();
 
-        URI serverURI = new URI("http://0.0.0.0:" + emptyPort);
+        URI serverURI = new URI("http://0.0.0.0:" + emptyPort + "/");
         server = Main.createServer(serverURI);
-        baseUri = serverURI.resolve("/timing/");
+        baseUri = serverURI.resolve("timing/");
     }
 
     @After
