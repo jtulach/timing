@@ -17,7 +17,11 @@ import org.glassfish.jersey.server.ResourceConfig;
  */
 final class Main implements ContainerResponseFilter {
     public static void main(String... args) throws Exception {
-        URI u = new URI("http://0.0.0.0:8080/");
+        int port = 8080;
+        if (args.length == 1) {
+            port = Integer.parseInt(args[0]);
+        }
+        URI u = new URI("http://0.0.0.0:" + port + "/");
         HttpServer server = createServer(u);
         System.err.println("Server running on following IP addresses:");
         dumpIPs();
