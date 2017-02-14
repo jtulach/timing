@@ -29,7 +29,7 @@ public final class TimingResource {
     @Path("add")
     public Event addEvent(@QueryParam("type") String type, @QueryParam("when") long when) {
         final Event newEvent = new Event(++counter, when, type);
-        events.add(newEvent);
+        events.add(0, newEvent);
         return newEvent;
     }
     
