@@ -9,6 +9,14 @@ public enum PhoneType {
     HOME, WORK, MOBILE;
 }
 
+@Model(className = "Event", properties = {
+    @Property(name = "id", type=int.class),
+    @Property(name = "when", type=long.class),
+    @Property(name = "type", type=String.class),
+})
+final class Events {
+}
+
 @Model(className = "Contact", properties = {
     @Property(name = "id", type = String.class),
     @Property(name = "firstName", type = String.class),

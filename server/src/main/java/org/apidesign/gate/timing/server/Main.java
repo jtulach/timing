@@ -17,16 +17,21 @@ import org.glassfish.jersey.server.ResourceConfig;
  */
 final class Main implements ContainerResponseFilter {
     public static void main(String... args) throws Exception {
-        ResourceConfig rc = new ResourceConfig(
-            ContactsResource.class, Main.class
-        );
         URI u = new URI("http://0.0.0.0:8080/");
-        HttpServer server = GrizzlyHttpServerFactory.createHttpServer(u, rc);
+        HttpServer server = createServer(u);
         System.err.println("Server running on following IP addresses:");
         dumpIPs();
         System.err.println("Press Enter to shutdown the server");
         System.in.read();
-        server.stop();
+        server.shutdownNow();
+    }
+
+    static HttpServer createServer(URI u) {
+        ResourceConfig rc = new ResourceConfig(
+            TimingResource.class, Main.class
+        );
+        HttpServer server = GrizzlyHttpServerFactory.createHttpServer(u, rc);
+        return server;
     }
 
     @Override
