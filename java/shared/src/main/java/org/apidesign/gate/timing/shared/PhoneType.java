@@ -9,10 +9,11 @@ public enum PhoneType {
     HOME, WORK, MOBILE;
 }
 
-@Model(className = "Event", properties = {
+@Model(className = "Event", builder = "with", properties = {
     @Property(name = "id", type=int.class),
     @Property(name = "when", type=long.class),
     @Property(name = "type", type=String.class),
+    @Property(name = "ref", type=int.class),
 })
 final class Events {
     static String twoDigits(long value) {

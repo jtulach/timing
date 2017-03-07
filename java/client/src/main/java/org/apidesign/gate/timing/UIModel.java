@@ -1,11 +1,15 @@
 package org.apidesign.gate.timing;
 
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Iterator;
 import org.apidesign.gate.timing.js.Dialogs;
 import org.apidesign.gate.timing.shared.Contact;
 import org.apidesign.gate.timing.shared.Phone;
 import org.apidesign.gate.timing.shared.PhoneType;
 import java.util.List;
+import java.util.Set;
 import java.util.TreeSet;
 import net.java.html.json.ComputedProperty;
 import net.java.html.json.Function;
@@ -51,9 +55,27 @@ final class UIModel {
         TreeSet<Event> all = new TreeSet<>(new EventCmp());
         all.addAll(ui.getEvents());
         all.addAll(arr);
+        
+        Set<Integer> toDelete = new HashSet<>();
+        Iterator<Event> it = all.iterator();
+        while (it.hasNext()) {
+            Event ev = it.next();
+            if ("IGNORE".equals(ev.getType())) {
+                toDelete.add(ev.getRef());
+                it.remove();
+            } else if (toDelete.contains(ev.getId())) {
+                it.remove();
+            }
+        }
+
         ui.getEvents().clear();
         ui.getEvents().addAll(all);
-        ui.setMessage("We have " + all.size() + " event(s).");
+        ui.setMessage("Máme tu " + all.size() + " události.");
+    }
+
+    @OnReceive(url = "{url}/add?type={type}&ref={ref}", onError = "cannotConnect")
+    static void sendEvent(UI ui, Event reply) {
+        loadEvents(ui, Collections.nCopies(1, reply));
     }
 
     @OnReceive(method = "POST", url = "{url}", data = Contact.class, onError = "cannotConnect")
@@ -114,6 +136,10 @@ final class UIModel {
 
     @Function static void delete(UI ui, Contact data) {
         ui.deleteContact(ui.getUrl(), data.getId(), data);
+    }
+
+    @Function static void ignore(UI ui, Event data) {
+        ui.sendEvent(ui.getUrl(), "IGNORE", "" + data.getId());
     }
 
     @Function static void cancel(UI ui) {

@@ -1,8 +1,10 @@
 package org.apidesign.gate.timing;
 
+import java.util.Collections;
 import org.apidesign.gate.timing.shared.Contact;
 import org.apidesign.gate.timing.shared.PhoneType;
 import net.java.html.junit.BrowserRunner;
+import org.apidesign.gate.timing.shared.Event;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
 import org.junit.Test;
@@ -27,5 +29,17 @@ public class UIModelTest {
         UIModel.addPhoneEdited(model);
         assertEquals("2nd phone added", model.getEdited().getPhones().size(), 2);
         assertEquals("2nd is work phone", model.getEdited().getPhones().get(1).getType(), PhoneType.WORK);
+    }
+
+    @Test
+    public void ignoringAnEvent() {
+        UI model = new UI();
+        UIModel.loadEvents(model, Collections.nCopies(1, new Event().withId(22).withType("DATA").withWhen(432)));
+        assertEquals("One event", 1, model.getEvents().size());
+        UIModel.loadEvents(model, Collections.nCopies(1, new Event().withId(23).withType("DATA").withWhen(433)));
+        assertEquals("Two events", 2, model.getEvents().size());
+
+        UIModel.loadEvents(model, Collections.nCopies(1, new Event().withId(24).withType("IGNORE").withWhen(455).withRef(22)));
+        assertEquals("One event again", 1, model.getEvents().size());
     }
 }

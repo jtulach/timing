@@ -17,7 +17,9 @@ public final class TimingResource {
     private int counter;
     
     public TimingResource() {
-        events.add(new Event(++counter, System.currentTimeMillis(), "STARTED"));
+        events.add(
+            new Event().withId(++counter).withWhen(System.currentTimeMillis()).withType("STARTED")
+        );
     }
     
     @GET @Produces(MediaType.APPLICATION_JSON)
@@ -27,8 +29,17 @@ public final class TimingResource {
     
     @GET @Produces(MediaType.APPLICATION_JSON)
     @Path("add")
-    public Event addEvent(@QueryParam("type") String type, @QueryParam("when") long when) {
-        final Event newEvent = new Event(++counter, when, type);
+    public Event addEvent(
+        @QueryParam("type") String type, @QueryParam("when") long when,
+        @QueryParam("ref") int ref
+    ) {
+        if (when <= 0) {
+            when = System.currentTimeMillis();
+        }
+        final Event newEvent = new Event().withId(++counter).
+            withWhen(when).
+            withRef(ref).
+            withType(type);
         events.add(0, newEvent);
         return newEvent;
     }
