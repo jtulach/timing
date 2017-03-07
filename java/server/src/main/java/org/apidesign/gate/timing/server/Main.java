@@ -25,9 +25,14 @@ final class Main implements ContainerResponseFilter {
         HttpServer server = createServer(u);
         System.err.println("Server running on following IP addresses:");
         dumpIPs();
-        System.err.println("Press Enter to shutdown the server");
-        System.in.read();
-        server.shutdownNow();
+        System.err.println("Server running, press Ctrl-C to stop it.");
+        try {
+            synchronized (Main.class) {
+                Main.class.wait();
+            }
+        } finally {
+            server.shutdownNow();
+        }
     }
 
     static HttpServer createServer(URI u) {
