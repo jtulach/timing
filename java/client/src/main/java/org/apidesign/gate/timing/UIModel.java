@@ -1,16 +1,20 @@
 package org.apidesign.gate.timing;
 
+import java.util.Comparator;
 import org.apidesign.gate.timing.js.Dialogs;
 import org.apidesign.gate.timing.shared.Contact;
 import org.apidesign.gate.timing.shared.Phone;
 import org.apidesign.gate.timing.shared.PhoneType;
 import java.util.List;
+import java.util.TreeSet;
+import net.java.html.json.ComputedProperty;
 import net.java.html.json.Function;
 import net.java.html.json.Model;
 import net.java.html.json.ModelOperation;
 import net.java.html.json.OnPropertyChange;
 import net.java.html.json.OnReceive;
 import net.java.html.json.Property;
+import org.apidesign.gate.timing.shared.Event;
 
 /** Generates UI class that provides the application logic model for
  * the HTML page.
@@ -19,21 +23,37 @@ import net.java.html.json.Property;
     @Property(name = "url", type = String.class),
     @Property(name = "message", type = String.class),
     @Property(name = "alert", type = boolean.class),
+    @Property(name = "events", type = Event.class, array = true),
     @Property(name = "contacts", type = Contact.class, array = true),
     @Property(name = "selected", type = Contact.class),
-    @Property(name = "edited", type = Contact.class)
+    @Property(name = "edited", type = Contact.class),
+    @Property(name = "showContacts", type = boolean.class)
 })
 final class UIModel {
+
+    @ComputedProperty
+    static boolean showEvents(Contact edited, boolean showContacts) {
+        return !showContacts && edited == null;
+    }
 
     //
     // REST API callbacks
     //
 
     @OnReceive(url = "{url}", onError = "cannotConnect")
-    static void loadContacts(UI ui, List<Contact> arr) {
-        ui.getContacts().clear();
-        ui.getContacts().addAll(arr);
-        ui.setMessage("Loaded " + arr.size() + " contact(s).");
+    static void loadEvents(UI ui, List<Event> arr) {
+        class EventCmp implements Comparator<Event> {
+            @Override
+            public int compare(Event o1, Event o2) {
+                return o2.getId() - o1.getId();
+            }
+        }
+        TreeSet<Event> all = new TreeSet<>(new EventCmp());
+        all.addAll(ui.getEvents());
+        all.addAll(arr);
+        ui.getEvents().clear();
+        ui.getEvents().addAll(all);
+        ui.setMessage("We have " + all.size() + " event(s).");
     }
 
     @OnReceive(method = "POST", url = "{url}", data = Contact.class, onError = "cannotConnect")
@@ -62,6 +82,10 @@ final class UIModel {
 
     static void cannotConnect(UI data, Exception ex) {
         data.setMessage("Cannot connect " + ex.getMessage() + ". Should not you start the server project first?");
+        if (data.getUrl().contains("localhost")) {
+            data.setUrl("http://skimb.xelfi.cz/timing/");
+            data.connect();
+        }
     }
 
     //
@@ -73,7 +97,7 @@ final class UIModel {
         if (u.endsWith("/")) {
             data.setUrl(u.substring(0, u.length() - 1));
         }
-        data.loadContacts(data.getUrl());
+        data.loadEvents(data.getUrl());
     }
 
     @Function static void addNew(UI ui) {
@@ -151,7 +175,7 @@ final class UIModel {
      */
     static void onPageLoad() throws Exception {
         uiModel = new UI();
-        final String baseUrl = "http://localhost:8080/contacts/";
+        final String baseUrl = "http://localhost:8080/timing/";
         uiModel.setUrl(baseUrl);
         uiModel.setEdited(null);
         uiModel.setSelected(null);

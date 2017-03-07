@@ -48,6 +48,9 @@
 .contact{
     padding: 1em;
 }
+.event{
+    padding: 1em;
+}
 
 .spacer{
     height: 4em;
@@ -60,7 +63,7 @@
 #sticky-footer-button{
     position: fixed;
     bottom: 0px;
-    right: 0px; 
+    right: 0px;
     padding: 1em;
     padding-bottom: 2em;
     z-index: 4;
@@ -70,14 +73,18 @@
 #sticky-footer{
     position: fixed;
     bottom: 0px;
-    left: 0px; 
+    left: 0px;
     right:0px;
     width:100%;
     z-index: 0;
     background: #2d3e50;
 }
 
-#contact-form, #contats-list{
+#contact-form, #contacts-list{
+    padding-bottom: 3em;
+}
+
+#events-form, #events-list{
     padding-bottom: 3em;
 }
 
