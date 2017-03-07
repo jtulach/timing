@@ -15,6 +15,21 @@ public enum PhoneType {
     @Property(name = "type", type=String.class),
 })
 final class Events {
+    static String twoDigits(long value) {
+        if (value < 10) {
+            return "0" + value;
+        }
+        return "" + value;
+    }
+
+    @ComputedProperty
+    static String shortWhen(long when) {
+        long inSec = when / 1000L;
+        long hourMinSec = inSec % 3600L;
+        long min = hourMinSec / 60L;
+        long sec = hourMinSec % 60L;
+        return twoDigits(min) + "'" + twoDigits(sec) + "''";
+    }
 }
 
 @Model(className = "Contact", properties = {
