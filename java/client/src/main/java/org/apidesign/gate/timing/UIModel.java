@@ -1,13 +1,12 @@
 package org.apidesign.gate.timing;
 
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
 import org.apidesign.gate.timing.js.Dialogs;
 import org.apidesign.gate.timing.shared.Contact;
-import org.apidesign.gate.timing.shared.Phone;
-import org.apidesign.gate.timing.shared.PhoneType;
+import org.apidesign.gate.timing.shared.Events;
+import org.apidesign.gate.timing.shared.Event;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -18,7 +17,6 @@ import net.java.html.json.ModelOperation;
 import net.java.html.json.OnPropertyChange;
 import net.java.html.json.OnReceive;
 import net.java.html.json.Property;
-import org.apidesign.gate.timing.shared.Event;
 
 /** Generates UI class that provides the application logic model for
  * the HTML page.
@@ -44,17 +42,13 @@ final class UIModel {
     // REST API callbacks
     //
 
-    @OnReceive(url = "{url}", onError = "cannotConnect")
-    static void loadEvents(UI ui, List<Event> arr) {
-        class EventCmp implements Comparator<Event> {
-            @Override
-            public int compare(Event o1, Event o2) {
-                return o2.getId() - o1.getId();
-            }
-        }
-        TreeSet<Event> all = new TreeSet<>(new EventCmp());
+    @OnReceive(url = "{url}?newerThan={since}", onError = "cannotConnect")
+    static void loadEvents(UI ui, List<Event> arr, boolean reattach) {
+        TreeSet<Event> all = new TreeSet<>(Events.COMPARATOR);
         all.addAll(ui.getEvents());
         all.addAll(arr);
+
+        long newest = all.isEmpty() ? 1 : all.first().getWhen();
         
         Set<Integer> toDelete = new HashSet<>();
         Iterator<Event> it = all.iterator();
@@ -71,11 +65,15 @@ final class UIModel {
         ui.getEvents().clear();
         ui.getEvents().addAll(all);
         ui.setMessage("Máme tu " + all.size() + " události.");
+
+        if (reattach) {
+            ui.loadEvents(ui.getUrl(), "" + newest, true);
+        }
     }
 
     @OnReceive(url = "{url}/add?type={type}&ref={ref}", onError = "cannotConnect")
     static void sendEvent(UI ui, Event reply) {
-        loadEvents(ui, Collections.nCopies(1, reply));
+        loadEvents(ui, Collections.nCopies(1, reply), false);
     }
 
     @OnReceive(method = "POST", url = "{url}", data = Contact.class, onError = "cannotConnect")
@@ -119,13 +117,12 @@ final class UIModel {
         if (u.endsWith("/")) {
             data.setUrl(u.substring(0, u.length() - 1));
         }
-        data.loadEvents(data.getUrl());
+        data.loadEvents(data.getUrl(), "0", true);
     }
 
     @Function static void addNew(UI ui) {
         ui.setSelected(null);
         final Contact c = new Contact();
-        c.getPhones().add(new Phone("+49 89 0000 0000", PhoneType.HOME));
         ui.setEdited(c);
     }
 
@@ -155,13 +152,6 @@ final class UIModel {
         String invalid = null;
         if (e.getValidate() != null) {
             invalid = e.getValidate();
-        } else if (e.getAddress().getValidate() != null) {
-            invalid = e.getAddress().getValidate();
-        } else for (Phone p : e.getPhones()) {
-            if (p.getValidate() != null) {
-                invalid = p.getValidate();
-                break;
-            }
         }
         if (invalid != null && !Dialogs.confirm("Not all data are valid (" +
                 invalid + "). Do you want to proceed?", null
@@ -178,13 +168,9 @@ final class UIModel {
     }
 
     @Function static void addPhoneEdited(UI ui) {
-        final List<Phone> phones = ui.getEdited().getPhones();
-        PhoneType t = PhoneType.values()[phones.size() % PhoneType.values().length];
-        phones.add(new Phone("", t));
     }
 
-    @Function static void removePhoneEdited(UI ui, Phone data) {
-        ui.getEdited().getPhones().remove(data);
+    @Function static void removePhoneEdited(UI ui, String data) {
     }
     
     @Function static void hideAlert(UI ui) {
