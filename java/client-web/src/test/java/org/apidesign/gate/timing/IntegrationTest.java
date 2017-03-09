@@ -23,7 +23,7 @@ import org.junit.runner.RunWith;
     "<span data-bind='text: message'></span>\n" +
     "<ul data-bind='foreach: contacts'>\n" +
     "  <li>\n" +
-    "    <span data-bind='text: fullName'></span>\n" +
+    "    <span data-bind='text: name'></span>\n" +
     "  </li>\n" +
     "</ul>\n" +
     "\n"
@@ -33,10 +33,10 @@ public class IntegrationTest {
         UI model = new UI();
         model.applyBindings();
         model.getContacts().clear();
-        model.getContacts().add(new Contact("#1", "Toni", "Epple", null));
-        model.getContacts().add(new Contact("#2", "Joe", "Hacker", null));
-        model.getContacts().add(new Contact("#3", "Duke", "Script", null));
+        model.getContacts().add(new Contact("#1", "Toni", null));
+        model.getContacts().add(new Contact("#2", "Joe", null));
+        model.getContacts().add(new Contact("#3", "Duke", null));
 
-        assertEquals("Joe Hacker", model.getContacts().get(1).getFullName());
+        assertEquals("Joe", model.getContacts().get(1).getName());
     }
 }

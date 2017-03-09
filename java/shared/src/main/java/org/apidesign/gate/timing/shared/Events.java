@@ -58,32 +58,14 @@ public final class Events {
 
 @Model(className = "Contact", properties = {
     @Property(name = "id", type = String.class),
-    @Property(name = "firstName", type = String.class),
-    @Property(name = "lastName", type = String.class),
+    @Property(name = "name", type = String.class),
     @Property(name = "imgSrc", type = String.class),
 })
 final class Contacts {
-    @ComputedProperty static String fullName(
-        String firstName, String lastName
-    ) {
-        if (firstName == null) {
-            return lastName;
-        }
-        if (lastName == null) {
-            return firstName;
-        }
-        return firstName + " " + lastName;
-    }
-
-    @ComputedProperty static String validate(
-        String firstName, String lastName
-    ) {
+    @ComputedProperty static String validate(String name) {
         String res = null;
-        if (firstName == null || firstName.isEmpty()) {
-            res = "Specify first name";
-        }
-        if (res == null && (lastName == null || lastName.isEmpty())) {
-            res = "Specify last name";
+        if (name == null || name.isEmpty()) {
+            res = "Jméno musí být zadáno";
         }
         return res;
     }

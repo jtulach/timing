@@ -38,6 +38,11 @@ final class UIModel {
         return !showContacts && edited == null;
     }
 
+    @Function
+    static void chooseContact(UI model, Event data) {
+        model.setShowContacts(true);
+    }
+
     //
     // REST API callbacks
     //
@@ -80,7 +85,7 @@ final class UIModel {
     static void addContact(UI ui, List<Contact> updatedOnes, Contact newOne) {
         ui.getContacts().clear();
         ui.getContacts().addAll(updatedOnes);
-        ui.setMessage("Created " + newOne.getLastName() + ". " + updatedOnes.size() + " contact(s) now.");
+        ui.setMessage("Created " + newOne.getName() + ". " + updatedOnes.size() + " contact(s) now.");
         ui.setSelected(null);
         ui.setEdited(null);
     }
@@ -88,7 +93,7 @@ final class UIModel {
     static void updateContact(UI ui, List<Contact> updatedOnes, Contact original) {
         ui.getContacts().clear();
         ui.getContacts().addAll(updatedOnes);
-        ui.setMessage("Updated " + original.getLastName() + ". " + updatedOnes.size() + " contact(s) now.");
+        ui.setMessage("Updated " + original.getName() + ". " + updatedOnes.size() + " contact(s) now.");
         ui.setSelected(null);
         ui.setEdited(null);
     }
@@ -97,7 +102,7 @@ final class UIModel {
     static void deleteContact(UI ui, List<Contact> remainingOnes, Contact original) {
         ui.getContacts().clear();
         ui.getContacts().addAll(remainingOnes);
-        ui.setMessage("Deleted " + original.getLastName() + ". " + remainingOnes.size() + " contact(s) now.");
+        ui.setMessage("Deleted " + original.getName() + ". " + remainingOnes.size() + " contact(s) now.");
     }
 
     static void cannotConnect(UI data, Exception ex) {
