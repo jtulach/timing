@@ -48,6 +48,14 @@ final class UIModel {
         model.setChoose(data);
     }
 
+    @Function
+    static void contactSelected(UI model, Contact data) {
+        if (model.getChoose() != null) {
+            model.getChoose().setContact(data);
+        }
+        model.setChoose(null);
+    }
+
     //
     // REST API callbacks
     //
@@ -86,7 +94,7 @@ final class UIModel {
                     withName("Jarda)").
                     withImgSrc("http://wiki.apidesign.org/images/b/b7/Tulach.png")
             );
-            rec.add(new Record().withEvent(v));
+            rec.add(new Record().withEvent(v).withWho(a));
         }
         ui.getRecords().clear();
         ui.getRecords().addAll(rec);
@@ -100,6 +108,13 @@ final class UIModel {
     @OnReceive(url = "{url}/add?type={type}&ref={ref}", onError = "cannotConnect")
     static void sendEvent(UI ui, Event reply) {
         loadEvents(ui, Collections.nCopies(1, reply), false);
+    }
+
+    @OnReceive(url = "{url}?newerThan={since}", onError = "cannotConnect")
+    static void loadContacts(UI ui, List<Contact> arr, boolean reattach) {
+        ui.getContacts().clear();
+        ui.getContacts().addAll(arr);
+        ui.setMessage("Máme tu " + arr.size() + " závodníků.");
     }
 
     @OnReceive(method = "POST", url = "{url}", data = Contact.class, onError = "cannotConnect")
@@ -144,6 +159,7 @@ final class UIModel {
             data.setUrl(u.substring(0, u.length() - 1));
         }
         data.loadEvents(data.getUrl(), "0", true);
+        data.loadContacts(data.getUrl() + "/contacts", "0", true);
     }
 
     @Function static void addNew(UI ui) {

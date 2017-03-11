@@ -24,6 +24,7 @@ import org.apidesign.gate.timing.shared.Events;
 public final class TimingResource {
     private final NavigableSet<Event> events = new TreeSet<>(Events.COMPARATOR);
     private final Map<AsyncResponse,Long> awaiting = new HashMap<>();
+    private final ContactsResource contacts = new ContactsResource();
     private int counter;
     
     public TimingResource() {
@@ -92,5 +93,9 @@ public final class TimingResource {
             return;
         }
     }
-    
+
+    @Path("contacts")
+    public ContactsResource getContacts() {
+        return contacts;
+    }
 }

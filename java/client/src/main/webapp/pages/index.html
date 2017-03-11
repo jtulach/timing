@@ -21,7 +21,7 @@
             <div id="contats-list" data-bind="foreach: contacts">
                 <div class="pure-g">
                     <div class="pure-hidden-xs pure-u-md-1-5">
-                        <div class="avatar">
+                        <div class="avatar" data-bind="$root.contactSelected">
                             <img
                                 data-bind="attr: { 'src' : imgSrc }" width="96"
                             >
@@ -34,8 +34,11 @@
                         <div class="contact">
                             <div data-bind="text: name"></div>
 
-                            <button class="pure-button pure-hidden-xs" data-bind="click: $root.edit"><span>Edit</span></button>
-                            <button class="pure-button pure-hidden-xs" data-bind="click: $root.delete"><span>Delete</span></button>
+                            <button class="pure-button pure-hidden-xs" data-bind="click: $root.contactSelected"><span>Vybrat</span></button>
+                            <button class="pure-button pure-hidden-xs" data-bind="click: $root.edit"><span>Upravit</span></button>
+                            <!--
+                            <button class="pure-button pure-hidden-xs" data-bind="click: $root.delete"><span>Smazat</span></button>
+                            -->
                         </div>
                     </div>
                     <div class="pure-hidden-sm pure-hidden-lg pure-hidden-md pure-hidden-xl pure-u-1-5">
@@ -53,19 +56,20 @@
                 <i class=" fa fa-plus-circle"></i>
             </div>
         </script>
+        
+        <script type="text/html" id="avatar">
+            <div class="avatar" data-bind="click: $root.chooseContact, with: contact">
+                <!-- ko: if: imgSrc -->
+                <img data-bind="attr: { src : imgSrc }" width="96"/>
+                <!-- /ko -->
+            </div>
+        </script>
 
         <script type="text/html" id="list-events">
             <div id="events-list" data-bind="foreach: records">
                 <div class="pure-g">
                     <div class="pure-hidden-xs pure-u-md-1-5">
-                        <div class="avatar" data-bind="with: who">
-                            <img
-                                data-bind="click: $root.chooseContact"
-                                src="http://wiki.apidesign.org/images/b/b7/Tulach.png" width="96"
-                            >
-                            <!--
-                            <i class="fa fa-address-book" aria-hidden="true"></i>
-                            -->
+                        <div data-bind="template: { name: 'avatar', data: who }">
                         </div>
                     </div>
                     <div class="pure-u-4-5">
@@ -100,7 +104,7 @@
 
                     <div class="pure-control-group">
                         <label for="first-name">Jméno</label>
-                        <input class="pure-input-1-2" id="first-name" type="text" placeholder="Pepa z depa" data-bind="textInput: name" required>
+                        <input class="pure-input-1-2" id="first-name" type="text" placeholder="Lyžař loučkař" data-bind="textInput: name" required>
                     </div>
                     <div class="pure-control-group">
                         <label for="last-name">Obrázek</label>
