@@ -56,7 +56,7 @@ public final class Events {
     }
 }
 
-@Model(className = "Contact", properties = {
+@Model(className = "Contact", builder = "with", properties = {
     @Property(name = "id", type = String.class),
     @Property(name = "name", type = String.class),
     @Property(name = "imgSrc", type = String.class),

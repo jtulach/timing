@@ -55,10 +55,10 @@
         </script>
 
         <script type="text/html" id="list-events">
-            <div id="events-list" data-bind="foreach: events">
+            <div id="events-list" data-bind="foreach: records">
                 <div class="pure-g">
                     <div class="pure-hidden-xs pure-u-md-1-5">
-                        <div class="avatar">
+                        <div class="avatar" data-bind="with: who">
                             <img
                                 data-bind="click: $root.chooseContact"
                                 src="http://wiki.apidesign.org/images/b/b7/Tulach.png" width="96"
@@ -69,7 +69,7 @@
                         </div>
                     </div>
                     <div class="pure-u-4-5">
-                        <div class="event">
+                        <div class="event" data-bind="with: event">
                             <div>
                                 <span data-bind="text: type"></span>
                                 @ <span data-bind="text: shortWhen"></span>

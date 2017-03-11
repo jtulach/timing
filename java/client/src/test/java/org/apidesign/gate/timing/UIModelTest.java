@@ -27,17 +27,17 @@ public class UIModelTest {
             Collections.nCopies(1, new Event().withId(22).withType("DATA").withWhen(432)),
             false
         );
-        assertEquals("One event", 1, model.getEvents().size());
+        assertEquals("One event", 1, model.getRecords().size());
         UIModel.loadEvents(model,
             Collections.nCopies(1, new Event().withId(23).withType("DATA").withWhen(433)),
             false
         );
-        assertEquals("Two events", 2, model.getEvents().size());
+        assertEquals("Two events", 2, model.getRecords().size());
 
         UIModel.loadEvents(model,
             Collections.nCopies(1, new Event().withId(24).withType("IGNORE").withWhen(455).withRef(22)),
             false
         );
-        assertEquals("One event again", 1, model.getEvents().size());
+        assertEquals("One event again", 1, model.getRecords().size());
     }
 }

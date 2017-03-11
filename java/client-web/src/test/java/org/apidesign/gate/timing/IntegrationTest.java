@@ -33,9 +33,9 @@ public class IntegrationTest {
         UI model = new UI();
         model.applyBindings();
         model.getContacts().clear();
-        model.getContacts().add(new Contact("#1", "Toni", null));
-        model.getContacts().add(new Contact("#2", "Joe", null));
-        model.getContacts().add(new Contact("#3", "Duke", null));
+        model.getContacts().add(new Contact().withId("#1").withName("Toni"));
+        model.getContacts().add(new Contact().withId("#2").withName("Joe"));
+        model.getContacts().add(new Contact().withId("#3").withName("Duke"));
 
         assertEquals("Joe", model.getContacts().get(1).getName());
     }

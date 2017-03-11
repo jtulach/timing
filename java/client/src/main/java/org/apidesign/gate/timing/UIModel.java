@@ -8,6 +8,7 @@ import org.apidesign.gate.timing.shared.Contact;
 import org.apidesign.gate.timing.shared.Events;
 import org.apidesign.gate.timing.shared.Event;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Set;
 import java.util.TreeSet;
 import net.java.html.json.ComputedProperty;
@@ -18,29 +19,33 @@ import net.java.html.json.OnPropertyChange;
 import net.java.html.json.OnReceive;
 import net.java.html.json.Property;
 
-/** Generates UI class that provides the application logic model for
- * the HTML page.
- */
 @Model(className = "UI", targetId="", properties = {
     @Property(name = "url", type = String.class),
     @Property(name = "message", type = String.class),
     @Property(name = "alert", type = boolean.class),
-    @Property(name = "events", type = Event.class, array = true),
+
+    @Property(name = "choose", type = Avatar.class),
     @Property(name = "contacts", type = Contact.class, array = true),
     @Property(name = "selected", type = Contact.class),
     @Property(name = "edited", type = Contact.class),
-    @Property(name = "showContacts", type = boolean.class)
+
+    @Property(name = "records", type = Record.class, array = true),
 })
 final class UIModel {
 
     @ComputedProperty
-    static boolean showEvents(Contact edited, boolean showContacts) {
-        return !showContacts && edited == null;
+    static boolean showEvents(Contact edited, Avatar choose) {
+        return choose == null && edited == null;
+    }
+
+    @ComputedProperty
+    static boolean showContacts(Contact edited, Avatar choose) {
+        return choose != null;
     }
 
     @Function
-    static void chooseContact(UI model, Event data) {
-        model.setShowContacts(true);
+    static void chooseContact(UI model, Avatar data) {
+        model.setChoose(data);
     }
 
     //
@@ -50,7 +55,9 @@ final class UIModel {
     @OnReceive(url = "{url}?newerThan={since}", onError = "cannotConnect")
     static void loadEvents(UI ui, List<Event> arr, boolean reattach) {
         TreeSet<Event> all = new TreeSet<>(Events.COMPARATOR);
-        all.addAll(ui.getEvents());
+        for (Record r : ui.getRecords()) {
+            all.add(r.getEvent());
+        }
         all.addAll(arr);
 
         long newest = all.isEmpty() ? 1 : all.first().getWhen();
@@ -67,9 +74,23 @@ final class UIModel {
             }
         }
 
-        ui.getEvents().clear();
-        ui.getEvents().addAll(all);
-        ui.setMessage("Máme tu " + all.size() + " události.");
+        List<Record> rec = new ArrayList<>();
+        int i = 0;
+        for (Event v : all) {
+            if (i++ >= 10) {
+                break;
+            }
+            Avatar a = new Avatar().withContact(
+                new Contact().
+                    withId("x").
+                    withName("Jarda)").
+                    withImgSrc("http://wiki.apidesign.org/images/b/b7/Tulach.png")
+            );
+            rec.add(new Record().withEvent(v));
+        }
+        ui.getRecords().clear();
+        ui.getRecords().addAll(rec);
+        ui.setMessage("Máme tu " + rec.size() + " události.");
 
         if (reattach) {
             ui.loadEvents(ui.getUrl(), "" + newest, true);
@@ -140,8 +161,8 @@ final class UIModel {
         ui.deleteContact(ui.getUrl(), data.getId(), data);
     }
 
-    @Function static void ignore(UI ui, Event data) {
-        ui.sendEvent(ui.getUrl(), "IGNORE", "" + data.getId());
+    @Function static void ignore(UI ui, Record data) {
+        ui.sendEvent(ui.getUrl(), "IGNORE", "" + data.getEvent().getId());
     }
 
     @Function static void cancel(UI ui) {
@@ -196,6 +217,7 @@ final class UIModel {
         uiModel.setUrl(baseUrl);
         uiModel.setEdited(null);
         uiModel.setSelected(null);
+        uiModel.setChoose(null);
         uiModel.applyBindings();
         uiModel.connect();
     }
