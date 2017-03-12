@@ -14,7 +14,6 @@
         <module>shared</module>
         <module>client</module>
         <module>client-web</module>
-        <module>client-android</module>
         <module>client-ios</module>
         <module>server</module>
         <module>js</module>
@@ -62,4 +61,16 @@
             </plugin>
         </plugins>
     </build>
+    <profiles>
+        <profile>
+            <activation>
+                <property>
+                    <name>android.sdk.path</name>
+                </property>
+            </activation>
+            <modules>
+                <module>client-android</module>
+            </modules>
+        </profile>
+    </profiles>
 </project>
