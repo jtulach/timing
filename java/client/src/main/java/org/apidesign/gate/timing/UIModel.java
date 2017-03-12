@@ -29,6 +29,7 @@ import net.java.html.json.Property;
     @Property(name = "selected", type = Contact.class),
     @Property(name = "edited", type = Contact.class),
 
+    @Property(name = "nextOnStart", type = Avatar.class),
     @Property(name = "records", type = Record.class, array = true),
 })
 final class UIModel {
@@ -88,13 +89,7 @@ final class UIModel {
             if (i++ >= 10) {
                 break;
             }
-            Avatar a = new Avatar().withContact(
-                new Contact().
-                    withId(444).
-                    withName("Jarda)").
-                    withImgSrc("http://wiki.apidesign.org/images/b/b7/Tulach.png")
-            );
-            rec.add(new Record().withEvent(v).withWho(a));
+            rec.add(new Record().withEvent(v));
         }
         ui.getRecords().clear();
         ui.getRecords().addAll(rec);

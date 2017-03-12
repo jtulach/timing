@@ -40,9 +40,26 @@
 }
 
 .avatar{
+    position: relative;
+    left: 0px;
+    right: 0px;
     color: #2d3e50;
-    font-size: 6em;
+    font-size: 1em;
     padding: 0.1em;
+    width: 96px;
+    height: 96px;
+}
+
+.avatar *{
+    position: absolute;
+    left: 0px;
+    right: 0px;
+}
+
+.avatar span {
+    z-index: 4;
+    background-color: rgba(4, 4, 4, 0.5);
+    color: #ff0;
 }
 
 .contact{
@@ -58,6 +75,18 @@
 
 .heading-text{
     padding-left: 0.5em;
+}
+
+#sticky-footer-img {
+    background-color: #2d3e50;
+    position: fixed;
+    top: 0px;
+    right: 0px;
+    padding: 1em;
+    padding-top: 2em;
+    z-index: 4;
+    color: white;
+    font-size: 1em;
 }
 
 #sticky-footer-button{

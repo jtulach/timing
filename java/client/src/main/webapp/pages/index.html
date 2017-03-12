@@ -61,9 +61,10 @@
         
         <script type="text/html" id="avatar">
             <div class="avatar" data-bind="click: $root.chooseContact, with: contact">
-                <!-- ko: if: imgSrc -->
-                <img data-bind="attr: { src : imgSrc }" width="96"/>
-                <!-- /ko -->
+                <div>
+                    <span data-bind="text: name">Jméno</span>
+                    <img data-bind="attr: { src : imgSrc }" width="96" height="96"/>
+                </div>
             </div>
         </script>
 
@@ -71,7 +72,7 @@
             <div id="events-list" data-bind="foreach: records">
                 <div class="pure-g">
                     <div class="pure-hidden-xs pure-u-md-1-5">
-                        <div data-bind="template: { name: 'avatar', data: who }">
+                        <div data-bind="template: { name: 'avatar', data: who }"/>
                         </div>
                     </div>
                     <div class="pure-u-4-5">
@@ -96,6 +97,11 @@
                             <i class=" fa fa-trash"></i>
                         </div>
                     </div>
+                </div>
+            </div>
+            <div class="awesome-button" id="sticky-footer-img">
+                Startuje
+                <div data-bind="template: { name: 'avatar', data: nextOnStart }">
                 </div>
             </div>
         </script>
@@ -137,7 +143,7 @@
             <form class="pure-form">
                 <fieldset>
                     <input class="pure-input-2-3" type="url" data-bind="textInput: url" >
-                    <button class="pure-button pure-button-primary" data-bind="click: connect">Connect</button>
+                    <button class="pure-button pure-button-primary" data-bind="click: connect">Načíst</button>
                 </fieldset>
             </form>
         </div>
