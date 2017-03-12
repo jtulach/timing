@@ -11,6 +11,7 @@ import net.java.html.json.Property;
     @Property(name = "when", type=long.class),
     @Property(name = "type", type=String.class),
     @Property(name = "ref", type=int.class),
+    @Property(name = "who", type=int.class),
 })
 /** Operations with {@link Event} model classes.
  */

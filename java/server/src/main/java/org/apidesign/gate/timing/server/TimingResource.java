@@ -15,9 +15,11 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import org.apidesign.gate.timing.shared.Event;
 import org.apidesign.gate.timing.shared.Events;
 
@@ -88,6 +90,21 @@ public final class TimingResource {
         storage.scheduleStore("timings", Event.class, events);
         handleAwaiting(when);
         return newEvent;
+    }
+
+    @GET @Produces(MediaType.APPLICATION_JSON)
+    @Path("assign")
+    public synchronized Event assignEvent(
+        @QueryParam("event") int id, @QueryParam("who") int who
+    ) {
+        for (Event e : events) {
+            if (e.getId() == id) {
+                e.setWho(who);
+                storage.scheduleStore("timings", Event.class, events);
+                return e;
+            }
+        }
+        throw new WebApplicationException(Response.Status.NOT_FOUND);
     }
 
     private void handleAwaiting(long newest) {

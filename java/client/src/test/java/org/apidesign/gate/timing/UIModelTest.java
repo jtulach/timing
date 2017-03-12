@@ -40,4 +40,43 @@ public class UIModelTest {
         );
         assertEquals("One event again", 1, model.getRecords().size());
     }
+
+    @Test
+    public void oneEventPerId() {
+        UI model = new UI();
+        final Event ev = new Event().withId(22).withType("DATA").withWhen(432);
+        UIModel.loadEvents(model,
+            Collections.nCopies(1, ev), false
+        );
+        assertEquals("One event", 1, model.getRecords().size());
+        UIModel.loadEvents(model,
+            Collections.nCopies(1, ev), false
+        );
+        assertEquals("Still one event", 1, model.getRecords().size());
+    }
+
+    @Test
+    public void onStartPersonIsTakenToNextStart() {
+        UI model = new UI();
+        Contact jarda = new Contact().withId(1).withName("Jarouš");
+        Contact ondra = new Contact().withId(2).withName("Ondra");
+        Contact anna = new Contact().withId(3).withName("Anna");
+        Contact lazy = new Contact().withId(4).withName("Lazy");
+        model.getContacts().add(jarda);
+        model.getContacts().add(ondra);
+        model.getContacts().add(anna);
+        model.getContacts().add(lazy);
+
+        assertEquals("No events so far", 0, model.getRecords().size());
+
+        long now = System.currentTimeMillis();
+        model.setNextOnStart(new Avatar().withContact(ondra));
+        UIModel.loadEvents(model, Collections.nCopies(1,
+            new Event().withId(1).withType("START").withWhen(now)
+        ), false);
+
+        assertEquals("One record now", 1, model.getRecords().size());
+        assertEquals("Reference to Ondra", ondra.getId(), model.getRecords().get(0).getEvent().getWho());
+        assertEquals("Reference to Jarouš", ondra, model.getRecords().get(0).getWho().getContact());
+    }
 }

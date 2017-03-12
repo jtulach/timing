@@ -30,6 +30,8 @@ import net.java.html.json.Property;
     @Property(name = "edited", type = Contact.class),
 
     @Property(name = "nextOnStart", type = Avatar.class),
+    @Property(name = "orderOnStart", type = Contact.class, array = true),
+
     @Property(name = "records", type = Record.class, array = true),
 })
 final class UIModel {
@@ -57,6 +59,15 @@ final class UIModel {
         model.setChoose(null);
     }
 
+    @ModelOperation
+    static void onStartEvent(UI model, Event ev) {
+        if (ev.getWho() <= 0 && model.getNextOnStart() != null && model.getNextOnStart().getContact() != null) {
+            ev.setWho(model.getNextOnStart().getContact().getId());
+            model.getNextOnStart().setContact(null);
+            model.updateWho(model.getUrl(), "" + ev.getId(), "" + ev.getWho());
+        }
+    }
+
     //
     // REST API callbacks
     //
@@ -67,7 +78,12 @@ final class UIModel {
         for (Record r : ui.getRecords()) {
             all.add(r.getEvent());
         }
-        all.addAll(arr);
+        for (Event newEvent : arr) {
+            if ("START".equals(newEvent.getType())) {
+                ui.onStartEvent(newEvent);
+            }
+            all.add(newEvent);
+        }
 
         long newest = all.isEmpty() ? 1 : all.first().getWhen();
         
@@ -89,7 +105,9 @@ final class UIModel {
             if (i++ >= 10) {
                 break;
             }
-            rec.add(new Record().withEvent(v));
+            rec.add(new Record().withEvent(v).withWho(
+                new Avatar().withContact(findContact(ui.getContacts(), v.getWho()))
+            ));
         }
         ui.getRecords().clear();
         ui.getRecords().addAll(rec);
@@ -105,11 +123,19 @@ final class UIModel {
         loadEvents(ui, Collections.nCopies(1, reply), false);
     }
 
+    @OnReceive(url = "{url}/assign?event={id}&who={who}")
+    static void updateWho(UI ui, Event reply) {
+        loadEvents(ui, Collections.nCopies(1, reply), false);
+    }
+
     @OnReceive(url = "{url}/contacts", onError = "cannotConnect")
-    static void loadContacts(UI ui, List<Contact> arr) {
+    static void loadContacts(UI ui, List<Contact> arr, String alsoEventsFrom, boolean alsoReattach) {
         ui.getContacts().clear();
         ui.getContacts().addAll(arr);
         ui.setMessage("Máme tu " + arr.size() + " závodníků.");
+        if (alsoEventsFrom != null) {
+            ui.loadEvents(ui.getUrl(), alsoEventsFrom, alsoReattach);
+        }
     }
 
     @OnReceive(method = "POST", url = "{url}/contacts", data = Contact.class, onError = "cannotConnect")
@@ -154,8 +180,7 @@ final class UIModel {
         if (u.endsWith("/")) {
             data.setUrl(u.substring(0, u.length() - 1));
         }
-        data.loadEvents(data.getUrl(), "0", true);
-        data.loadContacts(data.getUrl());
+        data.loadContacts(data.getUrl(), "0", true);
     }
 
     @Function static void addContact(UI ui) {
@@ -232,6 +257,19 @@ final class UIModel {
         uiModel.setChoose(null);
         uiModel.applyBindings();
         uiModel.connect();
+    }
+
+    private static Contact findContact(List<Contact> contacts, int who) {
+        if (who <= 0) {
+            return null;
+        } else {
+            for (Contact c : contacts) {
+                if (c.getId() == who) {
+                    return c;
+                }
+            }
+            return null;
+        }
     }
 
 }
