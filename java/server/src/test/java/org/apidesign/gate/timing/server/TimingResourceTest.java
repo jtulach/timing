@@ -84,19 +84,28 @@ public class TimingResourceTest {
         assertEquals("FINISH", addedEvent.getType());
         assertEquals("Assigned to nobody", 0, addedEvent.getWho());
 
+        {
+            WebResource resource = client.resource(baseUri);
+            List<Event> list = resource.get(new GenericType<List<Event>>() {
+            });
+            assertEquals("Two elements " + list, 2, list.size());
+            assertEquals("First one is the added event", addedEvent, list.get(0));
+        }
+
+
         WebResource update = client.resource(baseUri.resolve("assign")).queryParam("event", "" + addedEvent.getId()).queryParam("who", "33");
         Event updatedEvent = update.get(Event.class);
-
 
         assertEquals("Same id", addedEvent.getId(), updatedEvent.getId());
         assertEquals("Same when", addedEvent.getWhen(), updatedEvent.getWhen());
         assertEquals(33, updatedEvent.getWho());
 
-        WebResource resource = client.resource(baseUri);
-        List<Event> list = resource.get(new GenericType<List<Event>>() {});
-        assertEquals("Two elements " + list, 2, list.size());
-
-        assertEquals("First one is the updated event", updatedEvent, list.get(0));
+        {
+            WebResource resource = client.resource(baseUri);
+            List<Event> list = resource.get(new GenericType<List<Event>>() {});
+            assertEquals("Two elements " + list, 2, list.size());
+            assertEquals("First one is the updated event", updatedEvent, list.get(0));
+        }
     }
 
     @Test
