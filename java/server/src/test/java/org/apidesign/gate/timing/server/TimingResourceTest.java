@@ -22,7 +22,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class TimingResourceTest {
-
     private final GenericType<List<Event>> eventType = new GenericType<List<Event>>() {};
     private HttpServer server;
     private URI baseUri;
@@ -35,6 +34,8 @@ public class TimingResourceTest {
         ServerSocket socket = new ServerSocket(0);
         int emptyPort = socket.getLocalPort();
         socket.close();
+        
+        System.setProperty("user.dir", "");
 
         URI serverURI = new URI("http://0.0.0.0:" + emptyPort + "/");
         server = Main.createServer(serverURI);
