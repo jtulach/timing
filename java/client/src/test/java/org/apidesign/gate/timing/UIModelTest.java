@@ -16,7 +16,7 @@ public class UIModelTest {
     @Test public void addNewSetsEdited() {
         UI model = new UI();
         Contact c = new Contact();
-        UIModel.edit(model, c);
+        UIModel.editContact(model, c);
         assertEquals("c is now edited", model.getEdited(), c);
     }
 

@@ -40,7 +40,7 @@ final class UIModel {
 
     @ComputedProperty
     static boolean showContacts(Contact edited, Avatar choose) {
-        return choose != null;
+        return choose != null && edited == null;
     }
 
     @Function
@@ -110,14 +110,14 @@ final class UIModel {
         loadEvents(ui, Collections.nCopies(1, reply), false);
     }
 
-    @OnReceive(url = "{url}?newerThan={since}", onError = "cannotConnect")
-    static void loadContacts(UI ui, List<Contact> arr, boolean reattach) {
+    @OnReceive(url = "{url}/contacts", onError = "cannotConnect")
+    static void loadContacts(UI ui, List<Contact> arr) {
         ui.getContacts().clear();
         ui.getContacts().addAll(arr);
         ui.setMessage("Máme tu " + arr.size() + " závodníků.");
     }
 
-    @OnReceive(method = "POST", url = "{url}", data = Contact.class, onError = "cannotConnect")
+    @OnReceive(method = "POST", url = "{url}/contacts", data = Contact.class, onError = "cannotConnect")
     static void addContact(UI ui, List<Contact> updatedOnes, Contact newOne) {
         ui.getContacts().clear();
         ui.getContacts().addAll(updatedOnes);
@@ -125,7 +125,7 @@ final class UIModel {
         ui.setSelected(null);
         ui.setEdited(null);
     }
-    @OnReceive(method = "PUT", url = "{url}/{id}", data = Contact.class, onError = "cannotConnect")
+    @OnReceive(method = "PUT", url = "{url}/contacts/{id}", data = Contact.class, onError = "cannotConnect")
     static void updateContact(UI ui, List<Contact> updatedOnes, Contact original) {
         ui.getContacts().clear();
         ui.getContacts().addAll(updatedOnes);
@@ -134,7 +134,7 @@ final class UIModel {
         ui.setEdited(null);
     }
 
-    @OnReceive(method = "DELETE", url = "{url}/{id}", onError = "cannotConnect")
+    @OnReceive(method = "DELETE", url = "{url}/contacts/{id}", onError = "cannotConnect")
     static void deleteContact(UI ui, List<Contact> remainingOnes, Contact original) {
         ui.getContacts().clear();
         ui.getContacts().addAll(remainingOnes);
@@ -142,10 +142,11 @@ final class UIModel {
     }
 
     static void cannotConnect(UI data, Exception ex) {
-        data.setMessage("Cannot connect " + ex.getMessage() + ". Should not you start the server project first?");
         if (data.getUrl().contains("localhost")) {
             data.setUrl("http://skimb.xelfi.cz/timing/");
             data.connect();
+        } else {
+            data.setMessage("Spojení odmítnuto: " + ex.getMessage());
         }
     }
 
@@ -159,25 +160,25 @@ final class UIModel {
             data.setUrl(u.substring(0, u.length() - 1));
         }
         data.loadEvents(data.getUrl(), "0", true);
-        data.loadContacts(data.getUrl() + "/contacts", "0", true);
+        data.loadContacts(data.getUrl());
     }
 
-    @Function static void addNew(UI ui) {
+    @Function static void addContact(UI ui) {
         ui.setSelected(null);
         final Contact c = new Contact();
         ui.setEdited(c);
     }
 
-    @Function static void edit(UI ui, Contact data) {
+    @Function static void editContact(UI ui, Contact data) {
         ui.setSelected(data);
         ui.setEdited(data.clone());
     }
 
-    @Function static void delete(UI ui, Contact data) {
+    @Function static void deleteContact(UI ui, Contact data) {
         ui.deleteContact(ui.getUrl(), data.getId(), data);
     }
 
-    @Function static void ignore(UI ui, Record data) {
+    @Function static void ignoreEvent(UI ui, Record data) {
         ui.sendEvent(ui.getUrl(), "IGNORE", "" + data.getEvent().getId());
     }
 

@@ -21,7 +21,7 @@
             <div id="contats-list" data-bind="foreach: contacts">
                 <div class="pure-g">
                     <div class="pure-hidden-xs pure-u-md-1-5">
-                        <div class="avatar" data-bind="$root.contactSelected">
+                        <div class="avatar">
                             <img
                                 data-bind="attr: { 'src' : imgSrc }" width="96"
                             >
@@ -35,24 +35,26 @@
                             <div data-bind="text: name"></div>
 
                             <button class="pure-button pure-hidden-xs" data-bind="click: $root.contactSelected"><span>Vybrat</span></button>
-                            <button class="pure-button pure-hidden-xs" data-bind="click: $root.edit"><span>Upravit</span></button>
+                            <button class="pure-button pure-hidden-xs" data-bind="click: $root.editContact"><span>Upravit</span></button>
                             <!--
-                            <button class="pure-button pure-hidden-xs" data-bind="click: $root.delete"><span>Smazat</span></button>
+                            <button class="pure-button pure-hidden-xs" data-bind="click: $root.deleteContact"><span>Smazat</span></button>
                             -->
                         </div>
                     </div>
                     <div class="pure-hidden-sm pure-hidden-lg pure-hidden-md pure-hidden-xl pure-u-1-5">
-                        <div class="awesome-button"  data-bind="click: $root.edit">
+                        <div class="awesome-button"  data-bind="click: $root.editContact">
                             <i class=" fa fa-pencil"></i>
                         </div>
-                        <div class="awesome-button"  data-bind="click: $root.delete">
+                        <!--
+                        <div class="awesome-button"  data-bind="click: $root.deleteContact">
                             <i class=" fa fa-trash"></i>
                         </div>
+                        -->
                     </div>
                 </div>
             </div>
 
-            <div class="awesome-button" id="sticky-footer-button" data-bind="click: $root.addNew">
+            <div class="awesome-button" id="sticky-footer-button" data-bind="click: $root.addContact">
                 <i class=" fa fa-plus-circle"></i>
             </div>
         </script>
@@ -79,18 +81,18 @@
                                 @ <span data-bind="text: shortWhen"></span>
                                 id: <span data-bind="text: id"></span>
                             </div>
+                        </div> 
 
-                            <!--
-                            <button class="pure-button pure-hidden-xs" data-bind="click: $root.edit"><span>Edit</span></button>
-                            -->
-                            <button class="pure-button pure-hidden-xs" data-bind="click: $root.ignore"><span>Ignorovat</span></button>
-                        </div>
+                        <!--
+                        <button class="pure-button pure-hidden-xs" data-bind="click: $root.edit"><span>Edit</span></button>
+                        -->
+                        <button class="pure-button pure-hidden-xs" data-bind="click: $root.ignoreEvent"><span>Ignorovat</span></button>
                     </div>
                     <div class="pure-hidden-sm pure-hidden-lg pure-hidden-md pure-hidden-xl pure-u-1-5">
                         <div class="awesome-button"  data-bind="click: $root.edit">
                             <i class=" fa fa-pencil"></i>
                         </div>
-                        <div class="awesome-button"  data-bind="click: $root.delete">
+                        <div class="awesome-button"  data-bind="click: $root.ignoreEvent">
                             <i class=" fa fa-trash"></i>
                         </div>
                     </div>
