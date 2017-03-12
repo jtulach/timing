@@ -1,2 +1,3 @@
 /server/dependency-reduced-pom.xml
 /java/*/target/
+/java/server/data/*.json

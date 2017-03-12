@@ -11,13 +11,13 @@ public class ContactsTest {
 
     @Test
     public void mustHaveFirstName() {
-        Contact c = new Contact().withId("0");
+        Contact c = new Contact().withId(0);
         assertNotNull(c.getValidate());
     }
 
     @Test
     public void okName() {
-        Contact c = new Contact().withId("0").withName("first");
+        Contact c = new Contact().withId(0).withName("first");
         assertNull(c.getValidate());
     }
 

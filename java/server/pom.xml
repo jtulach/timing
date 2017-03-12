@@ -99,6 +99,7 @@
                 <version>1.2.1</version>
                 <configuration>
                     <mainClass>org.apidesign.gate.timing.server.Main</mainClass>
+                    <workingDirectory>${basedir}/data</workingDirectory>
                 </configuration>
             </plugin>      
             <plugin>

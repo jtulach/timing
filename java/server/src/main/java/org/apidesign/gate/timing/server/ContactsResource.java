@@ -1,10 +1,12 @@
 package org.apidesign.gate.timing.server;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -17,18 +19,18 @@ import javax.ws.rs.core.Response;
 import org.apidesign.gate.timing.shared.Contact;
 
 public final class ContactsResource {
-    private List<Contact> contacts = new ArrayList<>();
+    private final List<Contact> contacts = new ArrayList<>();
+    private final Storage storage;
     private int counter;
-    {
-        contacts.add(new Contact().
-            withId("" + ++counter).
-            withName("Jarda").
-            withImgSrc("http://wiki.apidesign.org/images/b/b7/Tulach.png")
-        );
-        contacts.add(new Contact().
-            withId("" + ++counter).
-            withName("Noname")
-        );
+
+    ContactsResource(Storage storage) throws IOException {
+        this.storage = storage;
+        this.storage.readInto("people", Contact.class, contacts);
+        for (Contact c : contacts) {
+            if (c.getId() > counter) {
+                counter = c.getId();
+            }
+        }
     }
 
     @GET @Produces(MediaType.APPLICATION_JSON)
@@ -38,17 +40,21 @@ public final class ContactsResource {
 
     @POST @Produces(MediaType.APPLICATION_JSON)
     public synchronized List<Contact> addContact(Contact newOne) {
-        contacts.add(newOne.withId("" + ++counter));
+        contacts.add(newOne.withId(++counter));
+        this.storage.scheduleStore("people", Contact.class, contacts);
         return contacts;
     }
 
     @PUT @Produces(MediaType.APPLICATION_JSON) @Path("{id}")
-    public synchronized List<Contact> updateContact(@PathParam("id") String id, Contact newOne) {
+    public synchronized List<Contact> updateContact(
+        @PathParam("id") @DefaultValue("-1") int id, Contact newOne
+    ) {
         ListIterator<Contact> it = contacts.listIterator();
         while (it.hasNext()) {
             Contact c = it.next();
-            if (id.equals(c.getId())) {
+            if (id == c.getId()) {
                 it.set(newOne.withId(id));
+                this.storage.scheduleStore("people", Contact.class, contacts);
                 return contacts;
             }
         }
@@ -62,6 +68,7 @@ public final class ContactsResource {
             Contact c = it.next();
             if (id.equals(c.getId())) {
                 it.remove();
+                this.storage.scheduleStore("people", Contact.class, contacts);
                 return contacts;
             }
         }

@@ -90,7 +90,7 @@ final class UIModel {
             }
             Avatar a = new Avatar().withContact(
                 new Contact().
-                    withId("x").
+                    withId(444).
                     withName("Jarda)").
                     withImgSrc("http://wiki.apidesign.org/images/b/b7/Tulach.png")
             );
@@ -175,7 +175,7 @@ final class UIModel {
     }
 
     @Function static void deleteContact(UI ui, Contact data) {
-        ui.deleteContact(ui.getUrl(), data.getId(), data);
+        ui.deleteContact(ui.getUrl(), "" + data.getId(), data);
     }
 
     @Function static void ignoreEvent(UI ui, Record data) {
@@ -204,7 +204,7 @@ final class UIModel {
 
         final Contact s = ui.getSelected();
         if (s != null) {
-            ui.updateContact(ui.getUrl(), s.getId(), e, e);
+            ui.updateContact(ui.getUrl(), "" + s.getId(), e, e);
         } else {
             ui.addContact(ui.getUrl(), e, e);
         }

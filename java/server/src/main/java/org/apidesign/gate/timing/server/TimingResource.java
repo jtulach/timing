@@ -1,6 +1,7 @@
 package org.apidesign.gate.timing.server;
 
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -24,13 +25,23 @@ import org.apidesign.gate.timing.shared.Events;
 public final class TimingResource {
     private final NavigableSet<Event> events = new TreeSet<>(Events.COMPARATOR);
     private final Map<AsyncResponse,Long> awaiting = new HashMap<>();
-    private final ContactsResource contacts = new ContactsResource();
+    private final Storage storage = new Storage();
+    private final ContactsResource contacts;
     private int counter;
     
-    public TimingResource() {
-        events.add(
-            new Event().withId(++counter).withWhen(System.currentTimeMillis()).withType("INITIALIZED")
-        );
+    public TimingResource() throws IOException {
+        this.contacts = new ContactsResource(storage);
+        this.storage.readInto("timing", Event.class, events);
+        for (Event e : events) {
+            if (e.getId() > counter) {
+                counter = e.getId();
+            }
+        }
+        if (events.isEmpty()) {
+            events.add(
+                new Event().withId(++counter).withWhen(System.currentTimeMillis()).withType("INITIALIZED")
+            );
+        }
     }
     
     @GET @Produces(MediaType.APPLICATION_JSON)
@@ -74,6 +85,7 @@ public final class TimingResource {
             withRef(ref).
             withType(type);
         events.add(newEvent);
+        storage.scheduleStore("timings", Event.class, events);
         handleAwaiting(when);
         return newEvent;
     }
