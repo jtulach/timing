@@ -76,7 +76,14 @@ public class TimingResourceTest {
     @Test
     public void updatingWhoDidAnEvent() {
         Client client = new Client();
-        long when = System.currentTimeMillis() + 300;
+        long when;
+        {
+            WebResource resource = client.resource(baseUri);
+            List<Event> list = resource.get(new GenericType<List<Event>>() {});
+            assertEquals("One element " + list, 1, list.size());
+            assertEquals("First one is INITIALIZED", "INITIALIZED", list.get(0).getType());
+            when = list.get(0).getWhen() + 300;
+        }
         WebResource add = client.resource(baseUri.resolve("add")).queryParam("type", "FINISH").queryParam("when", "" + when);
         Event addedEvent = add.get(Event.class);
         assertNotNull(addedEvent);
@@ -86,8 +93,7 @@ public class TimingResourceTest {
 
         {
             WebResource resource = client.resource(baseUri);
-            List<Event> list = resource.get(new GenericType<List<Event>>() {
-            });
+            List<Event> list = resource.get(new GenericType<List<Event>>() {});
             assertEquals("Two elements " + list, 2, list.size());
             assertEquals("First one is the added event", addedEvent, list.get(0));
         }
