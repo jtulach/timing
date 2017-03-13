@@ -49,11 +49,12 @@ public final class Events {
 
     @ComputedProperty
     static String shortWhen(long when) {
+        long mili = (when % 1000L) / 10;
         long inSec = when / 1000L;
         long hourMinSec = inSec % 3600L;
         long min = hourMinSec / 60L;
         long sec = hourMinSec % 60L;
-        return twoDigits(min) + "'" + twoDigits(sec) + "''";
+        return twoDigits(min) + "'" + twoDigits(sec) + ":" + twoDigits(mili);
     }
 }
 

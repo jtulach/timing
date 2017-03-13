@@ -95,11 +95,15 @@ public final class TimingResource {
     @GET @Produces(MediaType.APPLICATION_JSON)
     @Path("assign")
     public synchronized Event assignEvent(
-        @QueryParam("event") int id, @QueryParam("who") int who
+        @QueryParam("event") int id, @QueryParam("who") int who,
+        @QueryParam("ref") @DefaultValue("-1") int ref
     ) {
         for (Event e : events) {
             if (e.getId() == id) {
                 e.setWho(who);
+                if (ref >= 0) {
+                    e.setRef(ref);
+                }
                 storage.scheduleStore("timings", Event.class, events);
                 return e;
             }

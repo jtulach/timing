@@ -105,6 +105,50 @@ public class TimingResourceTest {
         assertEquals("Same id", addedEvent.getId(), updatedEvent.getId());
         assertEquals("Same when", addedEvent.getWhen(), updatedEvent.getWhen());
         assertEquals(33, updatedEvent.getWho());
+        assertEquals("Still old", 0, updatedEvent.getRef());
+
+        {
+            WebResource resource = client.resource(baseUri);
+            List<Event> list = resource.get(new GenericType<List<Event>>() {});
+            assertEquals("Two elements " + list, 2, list.size());
+            assertEquals("First one is the updated event", updatedEvent, list.get(0));
+        }
+    }
+
+    @Test
+    public void updatingWhoDidAnEventAndRef() {
+        Client client = new Client();
+        long when;
+        {
+            WebResource resource = client.resource(baseUri);
+            List<Event> list = resource.get(new GenericType<List<Event>>() {});
+            assertEquals("One element " + list, 1, list.size());
+            assertEquals("First one is INITIALIZED", "INITIALIZED", list.get(0).getType());
+            when = list.get(0).getWhen() + 300;
+        }
+        WebResource add = client.resource(baseUri.resolve("add")).queryParam("type", "FINISH").queryParam("when", "" + when);
+        Event addedEvent = add.get(Event.class);
+        assertNotNull(addedEvent);
+        assertEquals(when, addedEvent.getWhen());
+        assertEquals("FINISH", addedEvent.getType());
+        assertEquals("Assigned to nobody", 0, addedEvent.getWho());
+
+        {
+            WebResource resource = client.resource(baseUri);
+            List<Event> list = resource.get(new GenericType<List<Event>>() {});
+            assertEquals("Two elements " + list, 2, list.size());
+            assertEquals("First one is the added event", addedEvent, list.get(0));
+        }
+
+
+        WebResource update = client.resource(baseUri.resolve("assign")).queryParam("event", "" + addedEvent.getId()).
+            queryParam("who", "33").queryParam("ref", "77");
+        Event updatedEvent = update.get(Event.class);
+
+        assertEquals("Same id", addedEvent.getId(), updatedEvent.getId());
+        assertEquals("Same when", addedEvent.getWhen(), updatedEvent.getWhen());
+        assertEquals(33, updatedEvent.getWho());
+        assertEquals(77, updatedEvent.getRef());
 
         {
             WebResource resource = client.resource(baseUri);

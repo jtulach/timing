@@ -5,11 +5,10 @@ import java.util.HashSet;
 import java.util.Iterator;
 import org.apidesign.gate.timing.js.Dialogs;
 import org.apidesign.gate.timing.shared.Contact;
-import org.apidesign.gate.timing.shared.Events;
 import org.apidesign.gate.timing.shared.Event;
 import java.util.List;
-import java.util.ArrayList;
 import java.util.Set;
+import java.util.Stack;
 import java.util.TreeSet;
 import net.java.html.json.ComputedProperty;
 import net.java.html.json.Function;
@@ -19,7 +18,7 @@ import net.java.html.json.OnPropertyChange;
 import net.java.html.json.OnReceive;
 import net.java.html.json.Property;
 
-@Model(className = "UI", targetId="", properties = {
+@Model(className = "UI", targetId="", builder="with", properties = {
     @Property(name = "url", type = String.class),
     @Property(name = "message", type = String.class),
     @Property(name = "alert", type = boolean.class),
@@ -64,7 +63,21 @@ final class UIModel {
         if (ev.getWho() <= 0 && model.getNextOnStart() != null && model.getNextOnStart().getContact() != null) {
             ev.setWho(model.getNextOnStart().getContact().getId());
             model.getNextOnStart().setContact(null);
-            model.updateWho(model.getUrl(), "" + ev.getId(), "" + ev.getWho());
+            model.updateWhoRef(model.getUrl(), "" + ev.getId(), "" + ev.getWho(), "0");
+        }
+    }
+
+    @ModelOperation
+    static void onFinishEvent(UI model, Event finish, Stack<Record> startList) {
+        if (finish.getWho() <= 0 && !startList.isEmpty()) {
+            Record start = startList.pop();
+            Event startEvent = start.getStart();
+            finish.setWho(startEvent.getWho());
+            finish.setRef(startEvent.getId());
+            start.setFinish(finish);
+            startEvent.setRef(finish.getId());
+            model.updateWhoRef(model.getUrl(), "" + finish.getId(), "" + finish.getWho(), "" + finish.getRef());
+            model.updateWhoRef(model.getUrl(), "" + startEvent.getId(), "" + startEvent.getWho(), "" + startEvent.getRef());
         }
     }
 
@@ -74,23 +87,30 @@ final class UIModel {
 
     @OnReceive(url = "{url}?newerThan={since}", onError = "cannotConnect")
     static void loadEvents(UI ui, List<Event> arr, boolean reattach) {
-        TreeSet<Event> all = new TreeSet<>(Events.COMPARATOR);
+        TreeSet<Record> all = new TreeSet<>(RecordModel.COMPARATOR);
+        Stack<Record> unassignedStart = new Stack<>();
         for (Record r : ui.getRecords()) {
-            all.add(r.getEvent());
+            all.add(r);
+            if ("START".equals(r.getStart().getType()) && r.getStart().getRef() <= 0) {
+                unassignedStart.add(r);
+            }
         }
         for (Event newEvent : arr) {
             if ("START".equals(newEvent.getType())) {
                 ui.onStartEvent(newEvent);
             }
-            all.add(newEvent);
+            if ("FINISH".equals(newEvent.getType())) {
+                ui.onFinishEvent(newEvent, unassignedStart);
+            }
+            all.add(new Record().withStart(newEvent).withFinish(null).withWho(null));
         }
 
-        long newest = all.isEmpty() ? 1 : all.first().getWhen();
+        long newest = all.isEmpty() ? 1 : all.first().getStart().getWhen();
         
         Set<Integer> toDelete = new HashSet<>();
-        Iterator<Event> it = all.iterator();
+        Iterator<Record> it = all.iterator();
         while (it.hasNext()) {
-            Event ev = it.next();
+            Event ev = it.next().getStart();
             if ("IGNORE".equals(ev.getType())) {
                 toDelete.add(ev.getRef());
                 it.remove();
@@ -99,19 +119,18 @@ final class UIModel {
             }
         }
 
-        List<Record> rec = new ArrayList<>();
-        int i = 0;
-        for (Event v : all) {
-            if (i++ >= 10) {
+        int i = -1;
+        for (Record rec : all) {
+            if (++i >= 10) {
                 break;
             }
-            rec.add(new Record().withEvent(v).withWho(
-                new Avatar().withContact(findContact(ui.getContacts(), v.getWho()))
-            ));
+            if (rec.getWho() == null) {
+                rec.withWho(new Avatar().withContact(findContact(ui.getContacts(), rec.getStart().getWho())));
+            }
         }
-        ui.getRecords().clear();
-        ui.getRecords().addAll(rec);
-        ui.setMessage("Máme tu " + rec.size() + " události.");
+        Record[] newRecords = all.toArray(new Record[i]);
+        ui.withRecords(newRecords);
+        ui.setMessage("Máme tu " + newRecords.length + " události.");
 
         if (reattach) {
             ui.loadEvents(ui.getUrl(), "" + newest, true);
@@ -123,8 +142,8 @@ final class UIModel {
         loadEvents(ui, Collections.nCopies(1, reply), false);
     }
 
-    @OnReceive(url = "{url}/assign?event={id}&who={who}")
-    static void updateWho(UI ui, Event reply) {
+    @OnReceive(url = "{url}/assign?event={id}&who={who}&ref={ref}")
+    static void updateWhoRef(UI ui, Event reply) {
         loadEvents(ui, Collections.nCopies(1, reply), false);
     }
 
@@ -199,7 +218,7 @@ final class UIModel {
     }
 
     @Function static void ignoreEvent(UI ui, Record data) {
-        ui.sendEvent(ui.getUrl(), "IGNORE", "" + data.getEvent().getId());
+        ui.sendEvent(ui.getUrl(), "IGNORE", "" + data.getStart().getId());
     }
 
     @Function static void cancel(UI ui) {
