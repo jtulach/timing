@@ -41,7 +41,7 @@ public final class Events {
     //
 
     static String twoDigits(long value) {
-        if (value < 10) {
+        if (value >= 0 && value < 10) {
             return "0" + value;
         }
         return "" + value;

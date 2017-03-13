@@ -101,7 +101,7 @@ public class UIModelTest {
         final Event eventStart = new Event().withId(1).withType("START").withWhen(now).withWho(3);
         UIModel.loadEvents(model, Arrays.asList(eventStart), false);
 
-        final Event eventFinish = new Event().withId(1).withType("FINISH").withWhen(now + 13000);
+        final Event eventFinish = new Event().withId(2).withType("FINISH").withWhen(now + 13000);
         UIModel.loadEvents(model, Arrays.asList(eventFinish), false);
 
         assertEquals("Two events visible", 2, model.getRecords().size());
@@ -115,5 +115,39 @@ public class UIModelTest {
         assertEquals(runRecord.getFinish(), eventFinish);
         assertEquals(13000, runRecord.getLengthMillis());
         assertEquals("13:00", runRecord.getLength());
+    }
+
+    @Test
+    public void onConnectStartAndFinishOnLoad() {
+        UI model = new UI();
+        Contact jarda = new Contact().withId(1).withName("Jarouš");
+        Contact ondra = new Contact().withId(2).withName("Ondra");
+        Contact anna = new Contact().withId(3).withName("Anna");
+        Contact lazy = new Contact().withId(4).withName("Lazy");
+        model.getContacts().add(jarda);
+        model.getContacts().add(ondra);
+        model.getContacts().add(anna);
+        model.getContacts().add(lazy);
+
+        assertEquals("No events so far", 0, model.getRecords().size());
+
+        long now = System.currentTimeMillis();
+        final Event eventStart = new Event().withId(1).withType("START").withWhen(now).withWho(3).withRef(2);
+        final Event eventFinish = new Event().withId(2).withType("FINISH").withWhen(now + 13000).withRef(1);
+        UIModel.loadEvents(model, Arrays.asList(eventStart, eventFinish), false);
+
+        assertEquals("Two events visible", 2, model.getRecords().size());
+        Record finishRecord = model.getRecords().get(0);
+        Record runRecord = model.getRecords().get(1);
+
+        assertEquals("FINISH", finishRecord.getStart().getType());
+        assertEquals("START", runRecord.getStart().getType());
+
+        assertEquals(eventStart, runRecord.getStart());
+        assertEquals(eventFinish, runRecord.getFinish());
+        assertEquals(13000, runRecord.getLengthMillis());
+        assertEquals("13:00", runRecord.getLength());
+
+        assertEquals(anna, runRecord.getWho().getContact());
     }
 }

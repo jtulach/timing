@@ -5,7 +5,6 @@ import net.java.html.json.ComputedProperty;
 import net.java.html.json.Model;
 import net.java.html.json.Property;
 import org.apidesign.gate.timing.shared.Event;
-import org.apidesign.gate.timing.shared.Events;
 
 @Model(className = "Record", builder = "with", properties = {
     @Property(name = "start", type = Event.class),
@@ -14,7 +13,7 @@ import org.apidesign.gate.timing.shared.Events;
 })
 final class RecordModel {
     static final Comparator<Record> COMPARATOR = (r1, r2) -> {
-        return Events.COMPARATOR.compare(r1.getStart(), r2.getStart());
+        return r2.getStart().getId() - r1.getStart().getId();
     };
 
     @ComputedProperty
@@ -22,7 +21,8 @@ final class RecordModel {
         if (start == null || finish == null) {
             return 0;
         }
-        return finish.getWhen() - start.getWhen();
+        long time = finish.getWhen() - start.getWhen();
+        return time < 0 ? 0 : time;
     }
 
     @ComputedProperty
@@ -34,7 +34,7 @@ final class RecordModel {
     }
 
     static String twoDigits(long value) {
-        if (value < 10) {
+        if (value >= 0 && value < 10) {
             return "0" + value;
         }
         return "" + value;

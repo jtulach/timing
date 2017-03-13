@@ -1,5 +1,6 @@
 package org.apidesign.gate.timing;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -96,13 +97,17 @@ final class UIModel {
             }
         }
         for (Event newEvent : arr) {
+            final Record r = new Record().withStart(newEvent).withFinish(null).withWho(null);
             if ("START".equals(newEvent.getType())) {
                 ui.onStartEvent(newEvent);
+                if (newEvent.getRef() <= 0) {
+                    unassignedStart.add(r);
+                }
             }
             if ("FINISH".equals(newEvent.getType())) {
-                ui.onFinishEvent(newEvent, unassignedStart);
+                onFinishEvent(ui, newEvent, unassignedStart);
             }
-            all.add(new Record().withStart(newEvent).withFinish(null).withWho(null));
+            all.add(r);
         }
 
         long newest = all.isEmpty() ? 1 : all.first().getStart().getWhen();
@@ -110,25 +115,31 @@ final class UIModel {
         Set<Integer> toDelete = new HashSet<>();
         Iterator<Record> it = all.iterator();
         while (it.hasNext()) {
-            Event ev = it.next().getStart();
+            final Record r = it.next();
+            final Event ev = r.getStart();
             if ("IGNORE".equals(ev.getType())) {
                 toDelete.add(ev.getRef());
                 it.remove();
             } else if (toDelete.contains(ev.getId())) {
                 it.remove();
+            } else {
+                if ("START".equals(ev.getType())) {
+                    r.setFinish(findEvent(all, ev.getRef()));
+                }
+                if (r.getWho() == null) {
+                    r.withWho(new Avatar().withContact(findContact(ui.getContacts(), r.getStart().getWho())));
+                }
             }
         }
 
-        int i = -1;
-        for (Record rec : all) {
-            if (++i >= 10) {
-                break;
-            }
-            if (rec.getWho() == null) {
-                rec.withWho(new Avatar().withContact(findContact(ui.getContacts(), rec.getStart().getWho())));
+        int size = Math.min(10, all.size());
+        Record[] newRecords = new Record[size];
+        int i = 0;
+        for (Record r : all) {
+            if (i < newRecords.length) {
+                newRecords[i++] = r;
             }
         }
-        Record[] newRecords = all.toArray(new Record[i]);
         ui.withRecords(newRecords);
         ui.setMessage("Máme tu " + newRecords.length + " události.");
 
@@ -285,6 +296,19 @@ final class UIModel {
             for (Contact c : contacts) {
                 if (c.getId() == who) {
                     return c;
+                }
+            }
+            return null;
+        }
+    }
+
+    private static Event findEvent(Collection<Record> records, int id) {
+        if (id <= 0) {
+            return null;
+        } else {
+            for (Record r : records) {
+                if (r.getStart().getId() == id) {
+                    return r.getStart();
                 }
             }
             return null;
