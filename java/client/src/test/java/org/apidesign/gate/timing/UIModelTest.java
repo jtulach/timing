@@ -14,7 +14,7 @@ import org.junit.runner.RunWith;
 @RunWith(BrowserRunner.class)
 public class UIModelTest {
     private static void loadEvents(UI model, Event... events) {
-        UIModel.loadEvents(model, Arrays.asList(events), false);
+        UIModel.loadEvents(model, Arrays.asList(events));
         UIModel.onEventsChangeUpdateRecords(model);
         UIModel.onRecordsChangeUpdateWho(model);
     }

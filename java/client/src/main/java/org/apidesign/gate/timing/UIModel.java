@@ -17,6 +17,7 @@ import org.apidesign.gate.timing.shared.Events;
 
 @Model(className = "UI", targetId="", builder="with", properties = {
     @Property(name = "url", type = String.class),
+    @Property(name = "pending", type = String.class),
     @Property(name = "message", type = String.class),
     @Property(name = "alert", type = boolean.class),
 
@@ -61,7 +62,7 @@ final class UIModel {
     //
 
     @OnReceive(url = "{url}?newerThan={since}", onError = "cannotConnect")
-    static void loadEvents(UI ui, List<Event> arr, boolean reattach) {
+    static void loadEvents(UI ui, List<Event> arr) {
         TreeSet<Event> all = new TreeSet<>(Events.TIMELINE);
         all.addAll(ui.getEvents());
         all.addAll(arr);
@@ -82,12 +83,14 @@ final class UIModel {
             return;
         }
         final Record runRecord = ui.getRecords().get(0);
-        if (runRecord.getStart() == null) {
+        final Event ev = runRecord.getStart();
+        if (ev == null) {
             return;
         }
         final Avatar who = runRecord.getWho();
         if (who != null && who.getContact() == null) {
-            runRecord.getStart().withWho(nextOnStart.getContact().getId());
+            ev.withWho(nextOnStart.getContact().getId());
+            ui.updateWhoRef(ui.getUrl(), "" + ev.getId(), "" + ev.getWho());
             who.withContact(nextOnStart.getContact());
             nextOnStart.setContact(null);
         }
@@ -95,20 +98,20 @@ final class UIModel {
 
     @OnReceive(url = "{url}/add?type={type}&ref={ref}", onError = "cannotConnect")
     static void sendEvent(UI ui, Event reply) {
-        loadEvents(ui, Collections.nCopies(1, reply), false);
+        loadEvents(ui, Collections.nCopies(1, reply));
     }
 
-    @OnReceive(url = "{url}/assign?event={id}&who={who}&ref={ref}")
+    @OnReceive(url = "{url}/add?type=ASSIGN&who={who}&ref={ref}", onError = "cannotConnect")
     static void updateWhoRef(UI ui, Event reply) {
-        loadEvents(ui, Collections.nCopies(1, reply), false);
+        loadEvents(ui, Collections.nCopies(1, reply));
     }
 
     @OnReceive(url = "{url}/contacts", onError = "cannotConnect")
-    static void loadContacts(UI ui, Contact[] arr, String alsoEventsFrom, boolean alsoReattach) {
+    static void loadContacts(UI ui, Contact[] arr, String alsoEventsFrom) {
         ui.withContacts(arr);
         ui.setMessage("Máme tu " + arr.length + " závodníků.");
         if (alsoEventsFrom != null) {
-            ui.loadEvents(ui.getUrl(), alsoEventsFrom, alsoReattach);
+            ui.loadEvents(ui.getUrl(), alsoEventsFrom);
         }
     }
 
@@ -154,7 +157,7 @@ final class UIModel {
         if (u.endsWith("/")) {
             data.setUrl(u.substring(0, u.length() - 1));
         }
-        data.loadContacts(data.getUrl(), "0", true);
+        data.loadContacts(data.getUrl(), "0");
     }
 
     @Function static void addContact(UI ui) {

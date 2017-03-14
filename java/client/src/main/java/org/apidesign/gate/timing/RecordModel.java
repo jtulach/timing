@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Stack;
 import net.java.html.json.ComputedProperty;
 import net.java.html.json.Model;
 import net.java.html.json.ModelOperation;
@@ -120,27 +119,6 @@ final class RecordModel {
             }
         }
         return newRecords;
-    }
-
-    static void onStartEvent(UI model, Event ev) {
-        if (ev.getWho() <= 0 && model.getNextOnStart() != null && model.getNextOnStart().getContact() != null) {
-            ev.setWho(model.getNextOnStart().getContact().getId());
-            model.getNextOnStart().setContact(null);
-            model.updateWhoRef(model.getUrl(), "" + ev.getId(), "" + ev.getWho(), "0");
-        }
-    }
-
-    static void onFinishEvent(UI model, Event finish, Stack<Record> startList) {
-        if (finish.getWho() <= 0 && !startList.isEmpty()) {
-            Record start = startList.pop();
-            Event startEvent = start.getStart();
-            finish.setWho(startEvent.getWho());
-            finish.setRef(startEvent.getId());
-            start.setFinish(finish);
-            startEvent.setRef(finish.getId());
-            model.updateWhoRef(model.getUrl(), "" + finish.getId(), "" + finish.getWho(), "" + finish.getRef());
-            model.updateWhoRef(model.getUrl(), "" + startEvent.getId(), "" + startEvent.getWho(), "" + startEvent.getRef());
-        }
     }
 
     private static Record findRecord(Collection<Record> records, int searchId, Event searchFor, Boolean startOnly) {
