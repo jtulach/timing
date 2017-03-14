@@ -15,11 +15,9 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import org.apidesign.gate.timing.shared.Event;
 import org.apidesign.gate.timing.shared.Events;
 
@@ -76,7 +74,9 @@ public final class TimingResource {
     @GET @Produces(MediaType.APPLICATION_JSON)
     @Path("add")
     public synchronized Event addEvent(
-        @QueryParam("type") String type, @QueryParam("when") long when,
+        @QueryParam("type") String type,
+        @QueryParam("when") long when,
+        @QueryParam("who") int who,
         @QueryParam("ref") int ref
     ) {
         if (when <= 0) {
@@ -85,30 +85,12 @@ public final class TimingResource {
         final Event newEvent = new Event().withId(++counter).
             withWhen(when).
             withRef(ref).
+            withWho(who).
             withType(type);
         events.add(newEvent);
         storage.scheduleStore("timings", Event.class, events);
         handleAwaiting(when);
         return newEvent;
-    }
-
-    @GET @Produces(MediaType.APPLICATION_JSON)
-    @Path("assign")
-    public synchronized Event assignEvent(
-        @QueryParam("event") int id, @QueryParam("who") int who,
-        @QueryParam("ref") @DefaultValue("-1") int ref
-    ) {
-        for (Event e : events) {
-            if (e.getId() == id) {
-                e.setWho(who);
-                if (ref >= 0) {
-                    e.setRef(ref);
-                }
-                storage.scheduleStore("timings", Event.class, events);
-                return e;
-            }
-        }
-        throw new WebApplicationException(Response.Status.NOT_FOUND);
     }
 
     private void handleAwaiting(long newest) {

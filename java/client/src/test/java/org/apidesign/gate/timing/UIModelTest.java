@@ -1,7 +1,6 @@
 package org.apidesign.gate.timing;
 
 import java.util.Arrays;
-import java.util.Collections;
 import org.apidesign.gate.timing.shared.Contact;
 import net.java.html.junit.BrowserRunner;
 import org.apidesign.gate.timing.shared.Event;
@@ -14,6 +13,12 @@ import org.junit.runner.RunWith;
   */
 @RunWith(BrowserRunner.class)
 public class UIModelTest {
+    private static void loadEvents(UI model, Event... events) {
+        UIModel.loadEvents(model, Arrays.asList(events), false);
+        UIModel.onEventsChangeUpdateRecords(model);
+        UIModel.onRecordsChangeUpdateWho(model);
+    }
+
     @Test public void addNewSetsEdited() {
         UI model = new UI();
         Contact c = new Contact();
@@ -24,35 +29,21 @@ public class UIModelTest {
     @Test
     public void ignoringAnEvent() {
         UI model = new UI();
-        UIModel.loadEvents(model,
-            Collections.nCopies(1, new Event().withId(22).withType("DATA").withWhen(432)),
-            false
-        );
+        loadEvents(model, new Event().withId(22).withType("START").withWhen(432));
         assertEquals("One event", 1, model.getRecords().size());
-        UIModel.loadEvents(model,
-            Collections.nCopies(1, new Event().withId(23).withType("DATA").withWhen(433)),
-            false
-        );
+        loadEvents(model, new Event().withId(23).withType("START").withWhen(433));
         assertEquals("Two events", 2, model.getRecords().size());
-
-        UIModel.loadEvents(model,
-            Collections.nCopies(1, new Event().withId(24).withType("IGNORE").withWhen(455).withRef(22)),
-            false
-        );
+        loadEvents(model, new Event().withId(24).withType("IGNORE").withWhen(455).withRef(22));
         assertEquals("One event again", 1, model.getRecords().size());
     }
 
     @Test
     public void oneEventPerId() {
         UI model = new UI();
-        final Event ev = new Event().withId(22).withType("DATA").withWhen(432);
-        UIModel.loadEvents(model,
-            Collections.nCopies(1, ev), false
-        );
+        final Event ev = new Event().withId(22).withType("START").withWhen(432);
+        loadEvents(model, ev);
         assertEquals("One event", 1, model.getRecords().size());
-        UIModel.loadEvents(model,
-            Collections.nCopies(1, ev), false
-        );
+        loadEvents(model, ev);
         assertEquals("Still one event", 1, model.getRecords().size());
     }
 
@@ -71,10 +62,8 @@ public class UIModelTest {
         assertEquals("No events so far", 0, model.getRecords().size());
 
         long now = System.currentTimeMillis();
-        model.setNextOnStart(new Avatar().withContact(ondra));
-        UIModel.loadEvents(model, Collections.nCopies(1,
-            new Event().withId(1).withType("START").withWhen(now)
-        ), false);
+        model.getNextOnStart().withContact(ondra);
+        loadEvents(model, new Event().withId(1).withType("START").withWhen(now));
 
         assertEquals("One record now", 1, model.getRecords().size());
         assertEquals("Reference to Ondra", ondra.getId(), model.getRecords().get(0).getStart().getWho());
@@ -99,16 +88,15 @@ public class UIModelTest {
         long now = System.currentTimeMillis();
         model.setNextOnStart(new Avatar().withContact(ondra));
         final Event eventStart = new Event().withId(1).withType("START").withWhen(now).withWho(3);
-        UIModel.loadEvents(model, Arrays.asList(eventStart), false);
+        loadEvents(model, eventStart);
 
         final Event eventFinish = new Event().withId(2).withType("FINISH").withWhen(now + 13000);
-        UIModel.loadEvents(model, Arrays.asList(eventFinish), false);
+        loadEvents(model, eventFinish);
 
-        assertEquals("Two events visible", 2, model.getRecords().size());
-        Record finishRecord = model.getRecords().get(0);
-        Record runRecord = model.getRecords().get(1);
+        assertEquals("Records coerced", 1, model.getRecords().size());
+        Record runRecord = model.getRecords().get(0);
 
-        assertEquals("FINISH", finishRecord.getStart().getType());
+        assertEquals("FINISH", runRecord.getFinish().getType());
         assertEquals("START", runRecord.getStart().getType());
 
         assertEquals(runRecord.getStart(), eventStart);
@@ -131,17 +119,18 @@ public class UIModelTest {
 
         assertEquals("No events so far", 0, model.getRecords().size());
 
+        model.getNextOnStart().withContact(anna);
+
         long now = System.currentTimeMillis();
         final Event eventStart = new Event().withId(1).withType("START").withWhen(now).withWho(3).withRef(2);
         final Event eventFinish = new Event().withId(2).withType("FINISH").withWhen(now + 13000).withRef(1);
-        UIModel.loadEvents(model, Arrays.asList(eventStart, eventFinish), false);
+        loadEvents(model, eventStart, eventFinish);
 
-        assertEquals("Two events visible", 2, model.getRecords().size());
-        Record finishRecord = model.getRecords().get(0);
-        Record runRecord = model.getRecords().get(1);
+        assertEquals("One record visible", 1, model.getRecords().size());
+        Record runRecord = model.getRecords().get(0);
 
-        assertEquals("FINISH", finishRecord.getStart().getType());
         assertEquals("START", runRecord.getStart().getType());
+        assertEquals("FINISH", runRecord.getFinish().getType());
 
         assertEquals(eventStart, runRecord.getStart());
         assertEquals(eventFinish, runRecord.getFinish());

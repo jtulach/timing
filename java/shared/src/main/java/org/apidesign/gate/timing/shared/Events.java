@@ -16,24 +16,28 @@ import net.java.html.json.Property;
 /** Operations with {@link Event} model classes.
  */
 public final class Events {
-    /** Compares two {@link Event}s and sorts the newest ones first.
-     * Comparing is based on the time, then id and then
-     * it compares them for non-equality.
+    /** Compares two {@link Event}s based on their increasing id
      */
-    public static final Comparator<Event> COMPARATOR = Collections.reverseOrder((ev1, ev2) -> {
+    public static final Comparator<Event> TIMELINE = (ev1, ev2) -> {
         if (ev1 == ev2) {
             return 0;
-        }
-        long timeDelta = ev1.getWhen() - ev2.getWhen();
-        if (timeDelta != 0) {
-            return timeDelta < 0 ? -1 : 1;
         }
         int idDelta = ev1.getId() - ev2.getId();
         if (idDelta != 0) {
             return idDelta;
         }
+        long timeDelta = ev1.getWhen() - ev2.getWhen();
+        if (timeDelta != 0) {
+            return timeDelta < 0 ? -1 : 1;
+        }
         return ev1.hashCode() - ev2.hashCode();
-    });
+    };
+
+    /** Compares two {@link Event}s and sorts the newest ones first.
+     * Comparing is based on the time, then id and then
+     * it compares them for non-equality.
+     */
+    public static final Comparator<Event> COMPARATOR = Collections.reverseOrder(TIMELINE);
 
 
     //

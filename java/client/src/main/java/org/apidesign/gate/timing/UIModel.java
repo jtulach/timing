@@ -1,15 +1,10 @@
 package org.apidesign.gate.timing;
 
-import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
 import org.apidesign.gate.timing.js.Dialogs;
 import org.apidesign.gate.timing.shared.Contact;
 import org.apidesign.gate.timing.shared.Event;
 import java.util.List;
-import java.util.Set;
-import java.util.Stack;
 import java.util.TreeSet;
 import net.java.html.json.ComputedProperty;
 import net.java.html.json.Function;
@@ -18,6 +13,7 @@ import net.java.html.json.ModelOperation;
 import net.java.html.json.OnPropertyChange;
 import net.java.html.json.OnReceive;
 import net.java.html.json.Property;
+import org.apidesign.gate.timing.shared.Events;
 
 @Model(className = "UI", targetId="", builder="with", properties = {
     @Property(name = "url", type = String.class),
@@ -32,6 +28,7 @@ import net.java.html.json.Property;
     @Property(name = "nextOnStart", type = Avatar.class),
     @Property(name = "orderOnStart", type = Contact.class, array = true),
 
+    @Property(name = "events", type = Event.class, array = true),
     @Property(name = "records", type = Record.class, array = true),
 })
 final class UIModel {
@@ -59,92 +56,40 @@ final class UIModel {
         model.setChoose(null);
     }
 
-    @ModelOperation
-    static void onStartEvent(UI model, Event ev) {
-        if (ev.getWho() <= 0 && model.getNextOnStart() != null && model.getNextOnStart().getContact() != null) {
-            ev.setWho(model.getNextOnStart().getContact().getId());
-            model.getNextOnStart().setContact(null);
-            model.updateWhoRef(model.getUrl(), "" + ev.getId(), "" + ev.getWho(), "0");
-        }
-    }
-
-    @ModelOperation
-    static void onFinishEvent(UI model, Event finish, Stack<Record> startList) {
-        if (finish.getWho() <= 0 && !startList.isEmpty()) {
-            Record start = startList.pop();
-            Event startEvent = start.getStart();
-            finish.setWho(startEvent.getWho());
-            finish.setRef(startEvent.getId());
-            start.setFinish(finish);
-            startEvent.setRef(finish.getId());
-            model.updateWhoRef(model.getUrl(), "" + finish.getId(), "" + finish.getWho(), "" + finish.getRef());
-            model.updateWhoRef(model.getUrl(), "" + startEvent.getId(), "" + startEvent.getWho(), "" + startEvent.getRef());
-        }
-    }
-
     //
     // REST API callbacks
     //
 
     @OnReceive(url = "{url}?newerThan={since}", onError = "cannotConnect")
     static void loadEvents(UI ui, List<Event> arr, boolean reattach) {
-        TreeSet<Record> all = new TreeSet<>(RecordModel.COMPARATOR);
-        Stack<Record> unassignedStart = new Stack<>();
-        for (Record r : ui.getRecords()) {
-            all.add(r);
-            if ("START".equals(r.getStart().getType()) && r.getStart().getRef() <= 0) {
-                unassignedStart.add(r);
-            }
-        }
-        for (Event newEvent : arr) {
-            final Record r = new Record().withStart(newEvent).withFinish(null).withWho(null);
-            if ("START".equals(newEvent.getType())) {
-                ui.onStartEvent(newEvent);
-                if (newEvent.getRef() <= 0) {
-                    unassignedStart.add(r);
-                }
-            }
-            if ("FINISH".equals(newEvent.getType())) {
-                onFinishEvent(ui, newEvent, unassignedStart);
-            }
-            all.add(r);
-        }
+        TreeSet<Event> all = new TreeSet<>(Events.TIMELINE);
+        all.addAll(ui.getEvents());
+        all.addAll(arr);
+        ui.withEvents(all.toArray(new Event[0]));
+    }
+    
+    @OnPropertyChange("events")
+    static void onEventsChangeUpdateRecords(UI ui) {
+        Record[] records = RecordModel.compute(ui, ui.getEvents(), 10);
+        ui.withRecords(records);
+        ui.setMessage("Máme tu " + records.length + " události.");
+    }
 
-        long newest = all.isEmpty() ? 1 : all.first().getStart().getWhen();
-        
-        Set<Integer> toDelete = new HashSet<>();
-        Iterator<Record> it = all.iterator();
-        while (it.hasNext()) {
-            final Record r = it.next();
-            final Event ev = r.getStart();
-            if ("IGNORE".equals(ev.getType())) {
-                toDelete.add(ev.getRef());
-                it.remove();
-            } else if (toDelete.contains(ev.getId())) {
-                it.remove();
-            } else {
-                if ("START".equals(ev.getType())) {
-                    r.setFinish(findEvent(all, ev.getRef()));
-                }
-                if (r.getWho() == null) {
-                    r.withWho(new Avatar().withContact(findContact(ui.getContacts(), r.getStart().getWho())));
-                }
-            }
+    @OnPropertyChange("records")
+    static void onRecordsChangeUpdateWho(UI ui) {
+        final Avatar nextOnStart = ui.getNextOnStart();
+        if (ui.getRecords().isEmpty() || nextOnStart == null || nextOnStart.getContact() == null) {
+            return;
         }
-
-        int size = Math.min(10, all.size());
-        Record[] newRecords = new Record[size];
-        int i = 0;
-        for (Record r : all) {
-            if (i < newRecords.length) {
-                newRecords[i++] = r;
-            }
+        final Record runRecord = ui.getRecords().get(0);
+        if (runRecord.getStart() == null) {
+            return;
         }
-        ui.withRecords(newRecords);
-        ui.setMessage("Máme tu " + newRecords.length + " události.");
-
-        if (reattach) {
-            ui.loadEvents(ui.getUrl(), "" + newest, true);
+        final Avatar who = runRecord.getWho();
+        if (who != null && who.getContact() == null) {
+            runRecord.getStart().withWho(nextOnStart.getContact().getId());
+            who.withContact(nextOnStart.getContact());
+            nextOnStart.setContact(null);
         }
     }
 
@@ -159,10 +104,9 @@ final class UIModel {
     }
 
     @OnReceive(url = "{url}/contacts", onError = "cannotConnect")
-    static void loadContacts(UI ui, List<Contact> arr, String alsoEventsFrom, boolean alsoReattach) {
-        ui.getContacts().clear();
-        ui.getContacts().addAll(arr);
-        ui.setMessage("Máme tu " + arr.size() + " závodníků.");
+    static void loadContacts(UI ui, Contact[] arr, String alsoEventsFrom, boolean alsoReattach) {
+        ui.withContacts(arr);
+        ui.setMessage("Máme tu " + arr.length + " závodníků.");
         if (alsoEventsFrom != null) {
             ui.loadEvents(ui.getUrl(), alsoEventsFrom, alsoReattach);
         }
@@ -287,32 +231,6 @@ final class UIModel {
         uiModel.setChoose(null);
         uiModel.applyBindings();
         uiModel.connect();
-    }
-
-    private static Contact findContact(List<Contact> contacts, int who) {
-        if (who <= 0) {
-            return null;
-        } else {
-            for (Contact c : contacts) {
-                if (c.getId() == who) {
-                    return c;
-                }
-            }
-            return null;
-        }
-    }
-
-    private static Event findEvent(Collection<Record> records, int id) {
-        if (id <= 0) {
-            return null;
-        } else {
-            for (Record r : records) {
-                if (r.getStart().getId() == id) {
-                    return r.getStart();
-                }
-            }
-            return null;
-        }
     }
 
 }
