@@ -5,6 +5,7 @@ import org.apidesign.gate.timing.js.Dialogs;
 import org.apidesign.gate.timing.shared.Contact;
 import org.apidesign.gate.timing.shared.Event;
 import java.util.List;
+import java.util.Objects;
 import java.util.TreeSet;
 import net.java.html.json.ComputedProperty;
 import net.java.html.json.Function;
@@ -61,12 +62,13 @@ final class UIModel {
     // REST API callbacks
     //
 
-    @OnReceive(url = "{url}?newerThan={since}", onError = "cannotConnect")
+    @OnReceive(url = "{url}", onError = "cannotConnect")
     static void loadEvents(UI ui, List<Event> arr) {
         TreeSet<Event> all = new TreeSet<>(Events.TIMELINE);
         all.addAll(ui.getEvents());
         all.addAll(arr);
         ui.withEvents(all.toArray(new Event[0]));
+        ui.checkPendingEvents(null);
     }
     
     @OnPropertyChange("events")
@@ -107,12 +109,10 @@ final class UIModel {
     }
 
     @OnReceive(url = "{url}/contacts", onError = "cannotConnect")
-    static void loadContacts(UI ui, Contact[] arr, String alsoEventsFrom) {
+    static void loadContacts(UI ui, Contact[] arr) {
         ui.withContacts(arr);
         ui.setMessage("Máme tu " + arr.length + " závodníků.");
-        if (alsoEventsFrom != null) {
-            ui.loadEvents(ui.getUrl(), alsoEventsFrom);
-        }
+        ui.loadEvents(ui.getUrl());
     }
 
     @OnReceive(method = "POST", url = "{url}/contacts", data = Contact.class, onError = "cannotConnect")
@@ -149,6 +149,35 @@ final class UIModel {
     }
 
     //
+    // Pending events
+    //
+
+    @ModelOperation
+    static void checkPendingEvents(UI model, String previousURL) {
+        if (Objects.equals(model.getPending(), previousURL) && !model.getEvents().isEmpty()) {
+            List<Event> list = model.getEvents();
+            Event last = list.get(list.size() - 1);
+            model.setPending(model.getUrl());
+            model.loadPendingEvents(model.getUrl(), "" + last.getWhen(), model.getUrl());
+        } else {
+            if (previousURL != null) {
+                cannotLoadPending(model, new Exception());
+            }
+        }
+    }
+
+    @OnReceive(url = "{url}?newerThan={since}", onError = "cannotLoadPending")
+    static void loadPendingEvents(UI model, List<Event> events, String previousUrl) {
+        loadEvents(model, events);
+        model.checkPendingEvents(previousUrl);
+    }
+
+    static void cannotLoadPending(UI model, Exception ex) {
+        model.setMessage("Poslouchání na změnách selhalo. " + ex.getMessage() + " - načti ručně.");
+        model.setPending(null);
+    }
+
+    //
     // UI callback bindings
     //
 
@@ -157,7 +186,7 @@ final class UIModel {
         if (u.endsWith("/")) {
             data.setUrl(u.substring(0, u.length() - 1));
         }
-        data.loadContacts(data.getUrl(), "0");
+        data.loadContacts(data.getUrl());
     }
 
     @Function static void addContact(UI ui) {
@@ -176,7 +205,12 @@ final class UIModel {
     }
 
     @Function static void ignoreEvent(UI ui, Record data) {
-        ui.sendEvent(ui.getUrl(), "IGNORE", "" + data.getStart().getId());
+        if (data.getStart() != null) {
+            ui.sendEvent(ui.getUrl(), "IGNORE", "" + data.getStart().getId());
+        }
+        if (data.getFinish()!= null) {
+            ui.sendEvent(ui.getUrl(), "IGNORE", "" + data.getFinish().getId());
+        }
     }
 
     @Function static void cancel(UI ui) {
