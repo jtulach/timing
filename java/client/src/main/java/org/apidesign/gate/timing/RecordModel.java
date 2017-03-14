@@ -1,8 +1,8 @@
 package org.apidesign.gate.timing;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.LinkedList;
 import java.util.List;
 import net.java.html.json.ComputedProperty;
 import net.java.html.json.Model;
@@ -54,7 +54,7 @@ final class RecordModel {
 
     static Record[] compute(UI ui, List<Event> arr, int limit) {
         List<Record> previous = ui.getRecords();
-        List<Record> records = new ArrayList<>();
+        LinkedList<Record> records = new LinkedList<>();
         int ignored = 0;
         for (Event ev : arr) {
             Record r;
@@ -66,7 +66,7 @@ final class RecordModel {
                         r.empty();
                         r.withStart(ev);
                     }
-                    records.add(r);
+                    records.addFirst(r);
                     break;
                 case "FINISH":
                     r = findRecord(previous, ev.getId(), ev, false);
@@ -77,11 +77,13 @@ final class RecordModel {
                                 break CASE;
                             }
                         }
+                        r = new Record();
+                        r.empty();
+                        r.withFinish(ev);
+                        records.addFirst(r);
+                    } else {
+                        r.setFinish(ev);
                     }
-                    r = new Record();
-                    r.empty();
-                    r.withFinish(ev);
-                    records.add(r);
                     break;
                 case "IGNORE":
                     r = findRecord(records, ev.getRef(), null, null);

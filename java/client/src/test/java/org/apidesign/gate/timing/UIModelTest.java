@@ -122,21 +122,44 @@ public class UIModelTest {
         model.getNextOnStart().withContact(anna);
 
         long now = System.currentTimeMillis();
-        final Event eventStart = new Event().withId(1).withType("START").withWhen(now).withWho(3).withRef(2);
-        final Event eventFinish = new Event().withId(2).withType("FINISH").withWhen(now + 13000).withRef(1);
-        loadEvents(model, eventStart, eventFinish);
+        {
+            final Event eventStart = new Event().withId(1).withType("START").withWhen(now).withWho(3).withRef(2);
+            final Event eventFinish = new Event().withId(2).withType("FINISH").withWhen(now + 13000).withRef(1);
+            loadEvents(model, eventStart, eventFinish);
 
-        assertEquals("One record visible", 1, model.getRecords().size());
-        Record runRecord = model.getRecords().get(0);
+            assertEquals("One record visible", 1, model.getRecords().size());
+            Record runRecord = model.getRecords().get(0);
 
-        assertEquals("START", runRecord.getStart().getType());
-        assertEquals("FINISH", runRecord.getFinish().getType());
+            assertEquals("START", runRecord.getStart().getType());
+            assertEquals("FINISH", runRecord.getFinish().getType());
 
-        assertEquals(eventStart, runRecord.getStart());
-        assertEquals(eventFinish, runRecord.getFinish());
-        assertEquals(13000, runRecord.getLengthMillis());
-        assertEquals("13:00", runRecord.getLength());
+            assertEquals(eventStart, runRecord.getStart());
+            assertEquals(eventFinish, runRecord.getFinish());
+            assertEquals(13000, runRecord.getLengthMillis());
+            assertEquals("13:00", runRecord.getLength());
+    
+            assertEquals(anna, runRecord.getWho().getContact());
+        }
 
-        assertEquals(anna, runRecord.getWho().getContact());
+
+        model.getNextOnStart().withContact(ondra);
+        {
+            final Event eventStart = new Event().withId(3).withType("START").withWhen(now + 20000).withWho(2).withRef(4);
+            final Event eventFinish = new Event().withId(4).withType("FINISH").withWhen(now + 27000).withRef(3);
+            loadEvents(model, eventStart, eventFinish);
+            assertEquals("Two records visible", 2, model.getRecords().size());
+            Record runRecord = model.getRecords().get(0);
+
+            assertEquals("START", runRecord.getStart().getType());
+            assertEquals("FINISH", runRecord.getFinish().getType());
+
+            assertEquals(eventStart, runRecord.getStart());
+            assertEquals(eventFinish, runRecord.getFinish());
+            assertEquals(7000, runRecord.getLengthMillis());
+            assertEquals("07:00", runRecord.getLength());
+
+            assertEquals(ondra, runRecord.getWho().getContact());
+        }
+
     }
 }
