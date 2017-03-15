@@ -19,20 +19,22 @@ final class Storage {
     private final File dir;
     private final Executor storage;
 
-    Storage() {
-        final String userDir = System.getProperty("user.dir");
-        if (userDir == null || userDir.isEmpty()) {
-            dir = null;
-            storage = new Executor() {
-                @Override
-                public void execute(Runnable command) {
-                }
-            };
-        } else {
-            dir = new File(userDir);
-            dir.mkdirs();
-            storage = Executors.newFixedThreadPool(1);
+    private Storage(File dir, Executor exec) {
+        this.dir = dir;
+        this.storage = exec;
+    }
+
+    public static Storage empty() {
+        class NoOp implements Executor {
+            @Override
+            public void execute(Runnable command) {
+            }
         }
+        return new Storage(null, new NoOp());
+    }
+
+    public static Storage forDirectory(File dir) {
+        return new Storage(dir, Executors.newFixedThreadPool(1));
     }
 
     public <T> void scheduleStore(String prefix, Class<T> type, Collection<T> data) {

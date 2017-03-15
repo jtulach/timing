@@ -38,7 +38,7 @@ public class TimingResourceTest {
         System.setProperty("user.dir", "");
 
         URI serverURI = new URI("http://0.0.0.0:" + emptyPort + "/");
-        server = Main.createServer(serverURI);
+        server = Main.createServer(serverURI, null);
         baseUri = serverURI.resolve("timing/");
     }
 

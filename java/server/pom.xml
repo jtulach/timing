@@ -106,8 +106,9 @@
                         <argument>-cp</argument>
                         <argument>${project.build.directory}/${project.build.finalName}.jar</argument>
                         <argument>org.apidesign.gate.timing.server.Main</argument>
+                        <argument>8080</argument>
+                        <argument>${basedir}/data</argument>
                     </arguments>
-                    <workingDirectory>${basedir}/data</workingDirectory>
                 </configuration>
             </plugin>      
             <plugin>

@@ -1,5 +1,6 @@
 package org.apidesign.gate.timing.server;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.InterfaceAddress;
@@ -19,11 +20,20 @@ import org.glassfish.jersey.server.ResourceConfig;
 final class Main implements ContainerResponseFilter {
     public static void main(String... args) throws Exception {
         int port = 8080;
-        if (args.length == 1) {
+        if (args.length >= 1) {
             port = Integer.parseInt(args[0]);
         }
         URI u = new URI("http://0.0.0.0:" + port + "/");
-        HttpServer server = createServer(u);
+
+        File dir;
+        if (args.length >= 2) {
+            dir = new File(args[1]);
+            dir.mkdirs();
+        } else {
+            dir = null;
+        }
+
+        HttpServer server = createServer(u, dir);
         System.err.println("Server running on following IP addresses:");
         dumpIPs();
         System.err.println("Server running, press Ctrl-C to stop it.");
@@ -36,11 +46,11 @@ final class Main implements ContainerResponseFilter {
         }
     }
 
-    static HttpServer createServer(URI u) {
+    static HttpServer createServer(URI u, File dir) {
         ResourceConfig rc = new ResourceConfig(
             TimingResource.class, ContactsResource.class, Main.class
         );
-        final Storage storage = new Storage();
+        final Storage storage = dir == null ? Storage.empty() : Storage.forDirectory(dir);
         rc.registerInstances(new AbstractBinder() {
             @Override
             protected void configure() {
@@ -53,15 +63,15 @@ final class Main implements ContainerResponseFilter {
 
     @Override
     public void filter(
-        ContainerRequestContext requestContext, 
+        ContainerRequestContext requestContext,
         ContainerResponseContext r
     ) throws IOException {
         r.getHeaders().add("Access-Control-Allow-Origin", "*");
         r.getHeaders().add("Access-Control-Allow-Credentials", "true");
         r.getHeaders().add("Access-Control-Allow-Headers", "Content-Type");
         r.getHeaders().add("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT");
-    }    
-    
+    }
+
     private static void dumpIPs() throws Exception {
         Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces();
         while (en.hasMoreElements()) {
