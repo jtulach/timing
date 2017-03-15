@@ -2,9 +2,11 @@ package org.apidesign.gate.timing.server;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
+import javax.annotation.PostConstruct;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -18,13 +20,20 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.apidesign.gate.timing.shared.Contact;
 
+@Singleton
 public final class ContactsResource {
     private final List<Contact> contacts = new ArrayList<>();
-    private final Storage storage;
+
+    @Inject
+    private Storage storage;
     private int counter;
 
-    ContactsResource(Storage storage) throws IOException {
-        this.storage = storage;
+
+    public ContactsResource() throws IOException {
+    }
+
+    @PostConstruct
+    public void init() throws IOException {
         this.storage.readInto("people", Contact.class, contacts);
         for (Contact c : contacts) {
             if (c.getId() > counter) {

@@ -10,6 +10,7 @@ import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerResponseContext;
 import javax.ws.rs.container.ContainerResponseFilter;
 import org.glassfish.grizzly.http.server.HttpServer;
+import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 import org.glassfish.jersey.server.ResourceConfig;
 
@@ -37,8 +38,15 @@ final class Main implements ContainerResponseFilter {
 
     static HttpServer createServer(URI u) {
         ResourceConfig rc = new ResourceConfig(
-            TimingResource.class, Main.class
+            TimingResource.class, ContactsResource.class, Main.class
         );
+        final Storage storage = new Storage();
+        rc.registerInstances(new AbstractBinder() {
+            @Override
+            protected void configure() {
+                bind(storage).to(Storage.class);
+            }
+        });
         HttpServer server = GrizzlyHttpServerFactory.createHttpServer(u, rc);
         return server;
     }

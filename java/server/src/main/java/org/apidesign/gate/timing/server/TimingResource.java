@@ -9,6 +9,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.NavigableSet;
 import java.util.TreeSet;
+import javax.annotation.PostConstruct;
+import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -25,12 +27,17 @@ import org.apidesign.gate.timing.shared.Events;
 public final class TimingResource {
     private final NavigableSet<Event> events = new TreeSet<>(Events.COMPARATOR);
     private final Map<AsyncResponse,Long> awaiting = new HashMap<>();
-    private final Storage storage = new Storage();
-    private final ContactsResource contacts;
     private int counter;
+    @Inject
+    private Storage storage;
+    @Inject
+    private ContactsResource contacts;
     
-    public TimingResource() throws IOException {
-        this.contacts = new ContactsResource(storage);
+    public TimingResource() {
+    }
+
+    @PostConstruct
+    public void init() throws IOException {
         this.storage.readInto("timing", Event.class, events);
         for (Event e : events) {
             if (e.getId() > counter) {
