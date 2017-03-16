@@ -58,6 +58,9 @@ final class RecordModel {
         int ignored = 0;
         for (Event ev : arr) {
             Record r;
+            if (ev.getType() == null) {
+                continue;
+            }
             CASE: switch (ev.getType()) {
                 case "START":
                     r = findRecord(previous, ev.getId(), ev, true);
