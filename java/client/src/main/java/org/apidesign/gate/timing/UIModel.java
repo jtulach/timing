@@ -58,6 +58,16 @@ final class UIModel {
         model.setChoose(null);
     }
 
+    @Function
+    static void nextRecord(UI model, Record data) {
+
+    }
+
+    @Function
+    static void prevRecord(UI model, Record data) {
+
+    }
+
     //
     // REST API callbacks
     //
@@ -70,7 +80,7 @@ final class UIModel {
         ui.withEvents(all.toArray(new Event[0]));
         ui.checkPendingEvents(null);
     }
-    
+
     @OnPropertyChange("events")
     static void onEventsChangeUpdateRecords(UI ui) {
         Record[] records = RecordModel.compute(ui, ui.getEvents(), 10);
@@ -246,14 +256,14 @@ final class UIModel {
 
     @Function static void removePhoneEdited(UI ui, String data) {
     }
-    
+
     @Function static void hideAlert(UI ui) {
         ui.setAlert(false);
     }
-    
+
     @OnPropertyChange(value = "message") static void messageChanged(UI ui) {
         ui.setAlert(true);
-    }    
+    }
 
     private static UI uiModel;
     /**

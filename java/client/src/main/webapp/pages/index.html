@@ -87,6 +87,8 @@
                         <!--
                         <button class="pure-button pure-hidden-xs" data-bind="click: $root.edit"><span>Edit</span></button>
                         -->
+                        <button class="pure-button pure-hidden-xs" data-bind="enable: next, click: $root.nextRecord, text: nextTime"><span>Další</span></button>
+                        <button class="pure-button pure-hidden-xs" data-bind="enable: prev, click: $root.prevRecord, text: prevTime"><span>Předchozí</span></button>
                         <button class="pure-button pure-hidden-xs" data-bind="click: $root.ignoreEvent"><span>Ignorovat</span></button>
                     </div>
                     <div class="pure-hidden-sm pure-hidden-lg pure-hidden-md pure-hidden-xl pure-u-1-5">

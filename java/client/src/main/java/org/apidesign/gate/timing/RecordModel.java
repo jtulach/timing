@@ -16,6 +16,8 @@ import org.apidesign.gate.timing.shared.Event;
     @Property(name = "finish", type = Event.class),
     @Property(name = "ignore", type = boolean.class),
     @Property(name = "who", type = Avatar.class),
+    @Property(name = "next", type = Event.class),
+    @Property(name = "prev", type = Event.class),
 })
 final class RecordModel {
     static final Comparator<Record> COMPARATOR = (r1, r2) -> {
@@ -25,6 +27,7 @@ final class RecordModel {
     @ModelOperation
     static void empty(Record model) {
         model.withStart(null).withFinish(null).withIgnore(false);
+        model.withPrev(null).withNext(null);
         model.getWho().withContact(null);
     }
 
@@ -45,6 +48,16 @@ final class RecordModel {
         return twoDigits(sec) + ":" + twoDigits(cent);
     }
 
+    @ComputedProperty
+    static String nextTime() {
+        return "next";
+    }
+
+    @ComputedProperty
+    static String prevTime() {
+        return "prev";
+    }
+
     static String twoDigits(long value) {
         if (value >= 0 && value < 10) {
             return "0" + value;
@@ -53,7 +66,6 @@ final class RecordModel {
     }
 
     static Record[] compute(UI ui, List<Event> arr, int limit) {
-        List<Record> previous = ui.getRecords();
         LinkedList<Record> records = new LinkedList<>();
         int ignored = 0;
         for (Event ev : arr) {
@@ -63,7 +75,7 @@ final class RecordModel {
             }
             CASE: switch (ev.getType()) {
                 case "START":
-                    r = findRecord(previous, ev.getId(), ev, true);
+                    r = findRecord(records, ev.getId(), ev, true);
                     if (r == null) {
                         r = new Record();
                         r.empty();
@@ -72,7 +84,7 @@ final class RecordModel {
                     records.addFirst(r);
                     break;
                 case "FINISH":
-                    r = findRecord(previous, ev.getId(), ev, false);
+                    r = findRecord(records, ev.getId(), ev, false);
                     if (r == null) {
                         for (Record prev : records) {
                             if (prev.getStart() != null && prev.getFinish() == null) {
@@ -96,14 +108,14 @@ final class RecordModel {
                     }
                     break;
                 case "ASSIGN":
-                    r = findRecord(previous, ev.getRef(), null, null);
+                    r = findRecord(records, ev.getRef(), null, null);
                     if (r != null) {
                         r.getWho().withContact(findContact(ui.getContacts(), ev.getWho()));
                     }
                     break;
                 case "CONNECT":
-                    Record finish = findRecord(previous, ev.getRef(), null, false);
-                    Record start = findRecord(previous, ev.getWho(), null, true);
+                    Record finish = findRecord(records, ev.getRef(), null, false);
+                    Record start = findRecord(records, ev.getWho(), null, true);
                     if (start != null && finish != null) {
                         start.setFinish(finish.getFinish());
                         finish.setStart(start.getStart());
