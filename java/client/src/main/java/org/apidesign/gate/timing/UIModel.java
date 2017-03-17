@@ -102,7 +102,7 @@ final class UIModel {
         final Avatar who = runRecord.getWho();
         if (who != null && who.getContact() == null) {
             ev.withWho(nextOnStart.getContact().getId());
-            ui.updateWhoRef(ui.getUrl(), "" + ev.getId(), "" + ev.getWho());
+            ui.updateWhoRef(ui.getUrl(), "" + ev.getWho(), "" + ev.getId());
             who.withContact(nextOnStart.getContact());
             nextOnStart.setContact(null);
         }
