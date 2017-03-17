@@ -82,6 +82,10 @@
                                 <span data-bind="text: type"></span>
                                 @ <span data-bind="text: shortWhen"></span>
                             </span>
+                            <span data-bind="visible: !start(), with: finish">
+                                <span data-bind="text: type"></span>
+                                @ <span data-bind="text: shortWhen"></span>
+                            </span>
                         </div> 
 
                         <!--

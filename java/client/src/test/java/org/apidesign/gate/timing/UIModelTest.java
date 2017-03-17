@@ -5,6 +5,7 @@ import org.apidesign.gate.timing.shared.Contact;
 import net.java.html.junit.BrowserRunner;
 import org.apidesign.gate.timing.shared.Event;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -137,7 +138,7 @@ public class UIModelTest {
             assertEquals(eventFinish, runRecord.getFinish());
             assertEquals(13000, runRecord.getLengthMillis());
             assertEquals("13:00", runRecord.getLength());
-    
+
             assertEquals(anna, runRecord.getWho().getContact());
         }
 
@@ -160,6 +161,53 @@ public class UIModelTest {
 
             assertEquals(ondra, runRecord.getWho().getContact());
         }
+
+    }
+
+    @Test
+    public void chooseFromMultipleFinishTimes() {
+        UI model = new UI();
+        Contact ondra = new Contact().withId(1).withName("Ondra");
+        model.getContacts().add(ondra);
+
+        long now = System.currentTimeMillis();
+        final Event eventStart = new Event().withId(3).withType("START").withWhen(now + 20000).withWho(1);
+        final Event eventFinish1 = new Event().withId(4).withType("FINISH").withWhen(now + 27000);
+        final Event eventFinish2 = new Event().withId(5).withType("FINISH").withWhen(now + 33000);
+        final Event eventFinish3 = new Event().withId(6).withType("FINISH").withWhen(now + 39000);
+        loadEvents(model, eventStart, eventFinish1, eventFinish2, eventFinish3);
+
+        assertEquals("Three events", 3, model.getRecords().size());
+        final Record startRecord = model.getRecords().get(2);
+
+        assertEquals("Start event", eventStart, startRecord.getStart());
+        assertEquals("1st finish used", eventFinish1, startRecord.getFinish());
+        assertNull("No earlier finish", startRecord.getPrev());
+        assertEquals("00:00", startRecord.getPrevTime());
+        assertEquals("Next finish available", eventFinish2, startRecord.getNext());
+        assertEquals("13:00", startRecord.getNextTime());
+
+        UIModel.nextRecord(model, startRecord);
+
+        assertEquals("2nd finish used", eventFinish2, startRecord.getFinish());
+        assertEquals("First finish available", eventFinish1, startRecord.getPrev());
+        assertEquals("Last finish available", eventFinish3, startRecord.getNext());
+        assertEquals("07:00", startRecord.getPrevTime());
+        assertEquals("19:00", startRecord.getNextTime());
+
+        UIModel.nextRecord(model, startRecord);
+
+        assertEquals("3rd finish used", eventFinish3, startRecord.getFinish());
+        assertEquals("2nd is previous", eventFinish2, startRecord.getPrev());
+        assertNull("No next ", startRecord.getNext());
+        assertEquals("13:00", startRecord.getPrevTime());
+        assertEquals("00:00", startRecord.getNextTime());
+
+        UIModel.prevRecord(model, startRecord);
+
+        assertEquals("2nd finish used again", eventFinish2, startRecord.getFinish());
+//        assertEquals("First finish available again", eventFinish1, startRecord.getPrev());
+//        assertEquals("Last finish available again", eventFinish3, startRecord.getNext());
 
     }
 }

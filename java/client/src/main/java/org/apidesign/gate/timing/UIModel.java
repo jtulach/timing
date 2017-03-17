@@ -60,12 +60,12 @@ final class UIModel {
 
     @Function
     static void nextRecord(UI model, Record data) {
-
+        RecordModel.resetFinish(data, data.getNext(), model.getRecords());
     }
 
     @Function
     static void prevRecord(UI model, Record data) {
-
+        RecordModel.resetFinish(data, data.getPrev(), model.getRecords());
     }
 
     //

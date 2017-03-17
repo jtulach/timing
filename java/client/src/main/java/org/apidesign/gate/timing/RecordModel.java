@@ -4,12 +4,14 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.TreeSet;
 import net.java.html.json.ComputedProperty;
 import net.java.html.json.Model;
 import net.java.html.json.ModelOperation;
 import net.java.html.json.Property;
 import org.apidesign.gate.timing.shared.Contact;
 import org.apidesign.gate.timing.shared.Event;
+import org.apidesign.gate.timing.shared.Events;
 
 @Model(className = "Record", builder = "with", properties = {
     @Property(name = "start", type = Event.class),
@@ -49,13 +51,13 @@ final class RecordModel {
     }
 
     @ComputedProperty
-    static String nextTime() {
-        return "next";
+    static String nextTime(Event start, Event next) {
+        return length(start, next);
     }
 
     @ComputedProperty
-    static String prevTime() {
-        return "prev";
+    static String prevTime(Event start, Event prev) {
+        return length(start, prev);
     }
 
     static String twoDigits(long value) {
@@ -126,11 +128,22 @@ final class RecordModel {
 
         int size = Math.min(limit, records.size() - ignored);
         Record[] newRecords = new Record[size];
+        Event nextFinish = null;
+        Record nextRun = null;
         int i = 0;
         for (Record r : records) {
             if (r.isIgnore()) {
                 continue;
             }
+            r.setNext(nextFinish);
+            if (r.getFinish() != null) {
+                if (nextRun != null) {
+                    nextRun.setPrev(r.getFinish());
+                }
+                nextFinish = r.getFinish();
+            }
+            nextRun = r;
+
             if (i < newRecords.length) {
                 newRecords[i++] = r;
             }
@@ -169,6 +182,21 @@ final class RecordModel {
             }
             return null;
         }
+    }
+
+    static void resetFinish(Record data, final Event currentFinish, final List<Record> records) {
+        TreeSet<Event> events = new TreeSet<>(Events.TIMELINE);
+        for (Record r : records) {
+            if (r.getFinish() != null) {
+                events.add(r.getFinish());
+            }
+            if (r.getFinish() == currentFinish) {
+                r.setFinish(null);
+            }
+        }
+        data.setFinish(currentFinish);
+        data.setNext(events.higher(currentFinish));
+        data.setPrev(events.lower(currentFinish));
     }
 
 }
