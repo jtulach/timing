@@ -190,13 +190,19 @@ final class RecordModel {
             if (r.getFinish() != null) {
                 events.add(r.getFinish());
             }
-            if (r.getFinish() == currentFinish) {
-                r.setFinish(null);
+            if (r.getStart() == null && r.getFinish() == data.getFinish()) {
+                r.getWho().setContact(null);
             }
         }
         data.setFinish(currentFinish);
         data.setNext(events.higher(currentFinish));
         data.setPrev(events.lower(currentFinish));
+        for (Record r : records) {
+            if (r.getStart() == null && r.getFinish() == currentFinish) {
+                r.getWho().setContact(data.getWho().getContact());
+            }
+        }
+
     }
 
 }
