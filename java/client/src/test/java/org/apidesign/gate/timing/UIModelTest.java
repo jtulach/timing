@@ -214,5 +214,12 @@ public class UIModelTest {
         assertEquals("First finish available again", eventFinish1, startRecord.getPrev());
         assertEquals("Last finish available again", eventFinish3, startRecord.getNext());
 
+        for (Record r : model.getRecords()) {
+            if (r.getStart() != null) {
+                continue;
+            }
+            assertNull("No next for finish: " + r, r.getNext());
+            assertNull("No prev for finish: " + r, r.getPrev());
+        }
     }
 }

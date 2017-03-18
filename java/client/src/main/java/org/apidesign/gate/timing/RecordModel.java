@@ -139,7 +139,7 @@ final class RecordModel {
             if (r.isIgnore()) {
                 continue;
             }
-            if (r.getFinish() != null) {
+            if (r.getStart() != null) {
                 r.setNext(events.higher(r.getFinish()));
                 r.setPrev(events.lower(r.getFinish()));
             }
