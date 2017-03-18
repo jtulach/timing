@@ -73,7 +73,7 @@ public class UIModelTest {
 
 
     @Test
-    public void onConnectStartAndFinish() {
+    public void onConnectButDuplicateStartAndFinish() {
         UI model = new UI();
         Contact jarda = new Contact().withId(1).withName("Jarouš");
         Contact ondra = new Contact().withId(2).withName("Ondra");
@@ -94,8 +94,12 @@ public class UIModelTest {
         final Event eventFinish = new Event().withId(2).withType("FINISH").withWhen(now + 13000);
         loadEvents(model, eventFinish);
 
-        assertEquals("Records coerced", 1, model.getRecords().size());
-        Record runRecord = model.getRecords().get(0);
+        assertEquals("Two records exist", 2, model.getRecords().size());
+        Record finishRecord = model.getRecords().get(0);
+        assertEquals("FINISH", finishRecord.getFinish().getType());
+        assertNull("No start", finishRecord.getStart());
+
+        Record runRecord = model.getRecords().get(1);
 
         assertEquals("FINISH", runRecord.getFinish().getType());
         assertEquals("START", runRecord.getStart().getType());
@@ -128,11 +132,12 @@ public class UIModelTest {
             final Event eventFinish = new Event().withId(2).withType("FINISH").withWhen(now + 13000).withRef(1);
             loadEvents(model, eventStart, eventFinish);
 
-            assertEquals("One record visible", 1, model.getRecords().size());
-            Record runRecord = model.getRecords().get(0);
+            assertEquals("Two records visible", 2, model.getRecords().size());
+            Record finishRecord = model.getRecords().get(0);
+            Record runRecord = model.getRecords().get(1);
 
-            assertEquals("START", runRecord.getStart().getType());
-            assertEquals("FINISH", runRecord.getFinish().getType());
+            assertNull("No start", finishRecord.getStart());
+            assertEquals("FINISH", finishRecord.getFinish().getType());
 
             assertEquals(eventStart, runRecord.getStart());
             assertEquals(eventFinish, runRecord.getFinish());
@@ -148,8 +153,8 @@ public class UIModelTest {
             final Event eventStart = new Event().withId(3).withType("START").withWhen(now + 20000).withWho(2).withRef(4);
             final Event eventFinish = new Event().withId(4).withType("FINISH").withWhen(now + 27000).withRef(3);
             loadEvents(model, eventStart, eventFinish);
-            assertEquals("Two records visible", 2, model.getRecords().size());
-            Record runRecord = model.getRecords().get(0);
+            assertEquals("Four records visible", 4, model.getRecords().size());
+            Record runRecord = model.getRecords().get(1);
 
             assertEquals("START", runRecord.getStart().getType());
             assertEquals("FINISH", runRecord.getFinish().getType());
@@ -177,8 +182,8 @@ public class UIModelTest {
         final Event eventFinish3 = new Event().withId(6).withType("FINISH").withWhen(now + 39000);
         loadEvents(model, eventStart, eventFinish1, eventFinish2, eventFinish3);
 
-        assertEquals("Three events", 3, model.getRecords().size());
-        final Record startRecord = model.getRecords().get(2);
+        assertEquals("One start and three finish records", 4, model.getRecords().size());
+        final Record startRecord = model.getRecords().get(3);
 
         assertEquals("Start event", eventStart, startRecord.getStart());
         assertEquals("1st finish used", eventFinish1, startRecord.getFinish());
@@ -206,8 +211,8 @@ public class UIModelTest {
         UIModel.prevRecord(model, startRecord);
 
         assertEquals("2nd finish used again", eventFinish2, startRecord.getFinish());
-//        assertEquals("First finish available again", eventFinish1, startRecord.getPrev());
-//        assertEquals("Last finish available again", eventFinish3, startRecord.getNext());
+        assertEquals("First finish available again", eventFinish1, startRecord.getPrev());
+        assertEquals("Last finish available again", eventFinish3, startRecord.getNext());
 
     }
 }

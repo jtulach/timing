@@ -94,17 +94,22 @@ final class UIModel {
         if (ui.getRecords().isEmpty() || nextOnStart == null || nextOnStart.getContact() == null) {
             return;
         }
-        final Record runRecord = ui.getRecords().get(0);
-        final Event ev = runRecord.getStart();
-        if (ev == null) {
-            return;
-        }
-        final Avatar who = runRecord.getWho();
-        if (who != null && who.getContact() == null) {
-            ev.withWho(nextOnStart.getContact().getId());
-            ui.updateWhoRef(ui.getUrl(), "" + ev.getWho(), "" + ev.getId());
-            who.withContact(nextOnStart.getContact());
-            nextOnStart.setContact(null);
+        for (Record runRecord : ui.getRecords()) {
+            final Event ev = runRecord.getStart();
+            if (ev == null) {
+                continue;
+            }
+            final Avatar who = runRecord.getWho();
+            if (who != null && who.getContact() != null) {
+                break;
+            }
+            if (who != null && who.getContact() == null) {
+                ev.withWho(nextOnStart.getContact().getId());
+                ui.updateWhoRef(ui.getUrl(), "" + ev.getWho(), "" + ev.getId());
+                who.withContact(nextOnStart.getContact());
+                nextOnStart.setContact(null);
+                break;
+            }
         }
     }
 

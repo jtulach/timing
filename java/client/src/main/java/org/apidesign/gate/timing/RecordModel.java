@@ -75,7 +75,7 @@ final class RecordModel {
             if (ev.getType() == null) {
                 continue;
             }
-            CASE: switch (ev.getType()) {
+            switch (ev.getType()) {
                 case "START":
                     r = findRecord(records, ev.getId(), ev, true);
                     if (r == null) {
@@ -88,15 +88,15 @@ final class RecordModel {
                 case "FINISH":
                     r = findRecord(records, ev.getId(), ev, false);
                     if (r == null) {
-                        for (Record prev : records) {
-                            if (prev.getStart() != null && prev.getFinish() == null) {
-                                prev.setFinish(ev);
-                                break CASE;
-                            }
-                        }
                         r = new Record();
                         r.empty();
                         r.withFinish(ev);
+                        for (Record prev : records) {
+                            if (prev.getFinish() == null) {
+                                prev.withFinish(ev);
+                                break;
+                            }
+                        }
                         records.addFirst(r);
                     } else {
                         r.setFinish(ev);
@@ -128,21 +128,21 @@ final class RecordModel {
 
         int size = Math.min(limit, records.size() - ignored);
         Record[] newRecords = new Record[size];
-        Event nextFinish = null;
-        Record nextRun = null;
+        TreeSet<Event> events = new TreeSet<>(Events.TIMELINE);
+        for (Record r : records) {
+            if (!r.isIgnore() && r.getFinish() != null) {
+                events.add(r.getFinish());
+            }
+        }
         int i = 0;
         for (Record r : records) {
             if (r.isIgnore()) {
                 continue;
             }
-            r.setNext(nextFinish);
             if (r.getFinish() != null) {
-                if (nextRun != null) {
-                    nextRun.setPrev(r.getFinish());
-                }
-                nextFinish = r.getFinish();
+                r.setNext(events.higher(r.getFinish()));
+                r.setPrev(events.lower(r.getFinish()));
             }
-            nextRun = r;
 
             if (i < newRecords.length) {
                 newRecords[i++] = r;
