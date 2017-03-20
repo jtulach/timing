@@ -22,6 +22,12 @@ public final class Events {
         if (ev1 == ev2) {
             return 0;
         }
+        if (ev1 == null) {
+            return -1;
+        }
+        if (ev2 == null) {
+            return 1;
+        }
         int idDelta = ev1.getId() - ev2.getId();
         if (idDelta != 0) {
             return idDelta;

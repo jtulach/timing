@@ -46,8 +46,24 @@ final class UIModel {
     }
 
     @Function
-    static void chooseContact(UI model, Avatar data) {
-        model.setChoose(data);
+    static void chooseContact(UI ui, Avatar data) {
+        ui.setChoose(data);
+        data.onSelect(() -> {
+            for (Record r : ui.getRecords()) {
+                if (r.getWho() == data && data.getContact() != null) {
+                    int who = r.getWho().getContact().getId();
+                    if (who <= 0) {
+                        continue;
+                    }
+                    if (r.getFinish() != null) {
+                        ui.updateWhoRef(ui.getUrl(), "" + who, "" + r.getFinish().getId());
+                    }
+                    if (r.getStart() != null) {
+                        ui.updateWhoRef(ui.getUrl(), "" + who, "" + r.getStart().getId());
+                    }
+                }
+            }
+        });
     }
 
     @Function
@@ -104,8 +120,11 @@ final class UIModel {
                 break;
             }
             if (who != null && who.getContact() == null) {
-                ev.withWho(nextOnStart.getContact().getId());
-                ui.updateWhoRef(ui.getUrl(), "" + ev.getWho(), "" + ev.getId());
+                final int id = nextOnStart.getContact().getId();
+                if (id > 0) {
+                    ev.withWho(id);
+                    ui.updateWhoRef(ui.getUrl(), "" + ev.getWho(), "" + ev.getId());
+                }
                 who.withContact(nextOnStart.getContact());
                 nextOnStart.setContact(null);
                 break;
