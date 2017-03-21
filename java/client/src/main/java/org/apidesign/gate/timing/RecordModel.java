@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.TreeSet;
 import net.java.html.json.ComputedProperty;
 import net.java.html.json.Model;
@@ -91,7 +92,9 @@ final class RecordModel {
                         r = new Record();
                         r.empty();
                         r.withFinish(ev);
-                        for (Record prev : records) {
+                        ListIterator<Record> it = records.listIterator(records.size());
+                        while (it.hasPrevious()) {
+                            Record prev = it.previous();
                             if (prev.getFinish() == null) {
                                 prev.withFinish(ev);
                                 break;
