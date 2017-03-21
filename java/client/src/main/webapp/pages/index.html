@@ -23,16 +23,14 @@
                     <div class="pure-hidden-xs pure-u-md-1-5">
                         <div class="avatar">
                             <img
-                                data-bind="click: $root.contactSelected, attr: { 'src' : imgSrc }" width="96"
+                                data-bind="visible: imgSrc, click: $root.contactSelected, attr: { 'src' : imgSrc }" width="96"
                             >
-                            <!--
-                            <i class="fa fa-address-book" aria-hidden="true"></i>
-                            -->
+                            <i data-bind="visible: !imgSrc()" class="fa fa-address-book" aria-hidden="true"></i>
                         </div>
                     </div>
                     <div class="pure-u-4-5">
                         <div class="contact">
-                            <div data-bind="text: name"></div>
+                            <div data-bind="text: name, click: $root.contactSelected"></div>
 
                             <button class="pure-button pure-hidden-xs" data-bind="click: $root.contactSelected"><span>Vybrat</span></button>
                             <button class="pure-button pure-hidden-xs" data-bind="click: $root.editContact"><span>Upravit</span></button>
@@ -63,7 +61,8 @@
             <div class="avatar" data-bind="click: $root.chooseContact, with: contact">
                 <div>
                     <span data-bind="text: name">Jméno</span>
-                    <img data-bind="attr: { src : imgSrc }" width="96" height="96"/>
+                    <img data-bind="visible: imgSrc, attr: { src : imgSrc }" width="96" height="96"/>
+                    <i data-bind="visible: !imgSrc()" class="fa fa-address-book" aria-hidden="true"></i>
                 </div>
             </div>
         </script>
@@ -75,9 +74,16 @@
                         <div data-bind="template: { name: 'avatar', data: who }"/>
                         </div>
                     </div>
-                    <div class="pure-u-4-5">
+                    <div class="pure-u-4-5 ">
                         <div class="event" >
                             <span data-bind="visible: lengthMillis, text: length"></span>
+                            <span class="pure-hidden-sm pure-hidden-lg pure-hidden-md pure-hidden-xl pure-u-1-5">
+                                <span data-bind="with: who">
+                                <span data-bind="with: contact">
+                                    <spand data-bind="text: name"/>
+                                </span>
+                                </span>
+                            </span>
                             <span data-bind="visible: lengthMillis() == 0, with: start">
                                 <span data-bind="text: type"></span>
                                 @ <span data-bind="text: shortWhen"></span>
@@ -88,17 +94,11 @@
                             </span>
                         </div> 
 
-                        <!--
-                        <button class="pure-button pure-hidden-xs" data-bind="click: $root.edit"><span>Edit</span></button>
-                        -->
-                        <button class="pure-button pure-hidden-xs" data-bind="enable: next, click: $root.nextRecord, text: nextTime"><span>Další</span></button>
-                        <button class="pure-button pure-hidden-xs" data-bind="enable: prev, click: $root.prevRecord, text: prevTime"><span>Předchozí</span></button>
-                        <button class="pure-button pure-hidden-xs" data-bind="click: $root.ignoreEvent"><span>Ignorovat</span></button>
+                        <button class="pure-button " data-bind="enable: next, click: $root.nextRecord, text: nextTime"><span>Další</span></button>
+                        <button class="pure-button " data-bind="enable: prev, click: $root.prevRecord, text: prevTime"><span>Předchozí</span></button>
+                        <button class="pure-button " data-bind="click: $root.ignoreEvent"><span>Ignorovat</span></button>
                     </div>
                     <div class="pure-hidden-sm pure-hidden-lg pure-hidden-md pure-hidden-xl pure-u-1-5">
-                        <div class="awesome-button"  data-bind="click: $root.edit">
-                            <i class=" fa fa-pencil"></i>
-                        </div>
                         <div class="awesome-button"  data-bind="click: $root.ignoreEvent">
                             <i class=" fa fa-trash"></i>
                         </div>
