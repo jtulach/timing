@@ -5,6 +5,7 @@ import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.NavigableSet;
 import java.util.TreeSet;
 import net.java.html.json.ComputedProperty;
 import net.java.html.json.Model;
@@ -143,8 +144,9 @@ final class RecordModel {
                 continue;
             }
             if (r.getStart() != null) {
-                r.setNext(events.higher(r.getFinish()));
-                r.setPrev(events.lower(r.getFinish()));
+                NavigableSet<Event> onlyNewer = events.tailSet(r.getStart(), true);
+                r.setNext(onlyNewer.higher(r.getFinish()));
+                r.setPrev(onlyNewer.lower(r.getFinish()));
             }
 
             if (i < newRecords.length) {
@@ -198,8 +200,9 @@ final class RecordModel {
             }
         }
         data.setFinish(currentFinish);
-        data.setNext(events.higher(currentFinish));
-        data.setPrev(events.lower(currentFinish));
+        NavigableSet<Event> onlyNewer = events.tailSet(data.getStart(), true);
+        data.setNext(onlyNewer.higher(currentFinish));
+        data.setPrev(onlyNewer.lower(currentFinish));
         for (Record r : records) {
             if (r.getStart() == null && r.getFinish() == currentFinish) {
                 r.getWho().setContact(data.getWho().getContact());

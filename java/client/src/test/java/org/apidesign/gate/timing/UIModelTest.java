@@ -197,4 +197,26 @@ public class UIModelTest {
         assertNull("Second start hasn't finished yet", model.getRecords().get(2).getFinish());
         assertNull("3rd start hasn't finished yet", model.getRecords().get(1).getFinish());
     }
+
+    @Test
+    public void cannotFinishSoonerThanStarted() {
+        UI model = new UI();
+        Contact ondra = new Contact().withId(1).withName("Ondra");
+        model.getContacts().add(ondra);
+
+        long now = System.currentTimeMillis();
+        final Event eventFinish = new Event().withId(3).withType("FINISH").withWhen(now + 20000).withWho(1);
+        final Event eventStart = new Event().withId(4).withType("START").withWhen(now + 27000);
+        loadEvents(model, eventFinish, eventStart);
+
+        assertEquals("Two records", 2, model.getRecords().size());
+        final Record startRecord = model.getRecords().get(0);
+
+        assertEquals("Start event", eventStart, startRecord.getStart());
+        assertNull("No finish yet", startRecord.getFinish());
+        assertNull("No earlier finish", startRecord.getPrev());
+        assertEquals("00:00", startRecord.getPrevTime());
+        assertNull("No next finish", startRecord.getNext());
+        assertEquals("00:00", startRecord.getNextTime());
+    }
 }
