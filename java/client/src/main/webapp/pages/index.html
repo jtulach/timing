@@ -25,7 +25,7 @@
                             <img
                                 data-bind="visible: imgSrc, click: $root.contactSelected, attr: { 'src' : imgSrc }" width="96"
                             >
-                            <i data-bind="visible: !imgSrc()" class="fa fa-address-book" aria-hidden="true"></i>
+                            <i data-bind="visible: !imgSrc(), click: $root.contactSelected" class="fa fa-address-book" aria-hidden="true"></i>
                         </div>
                     </div>
                     <div class="pure-u-4-5">
