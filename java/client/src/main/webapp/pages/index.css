@@ -56,6 +56,10 @@
     right: 0px;
 }
 
+.avatar .fa {
+    font-size: 96px;
+}
+
 .avatar span {
     z-index: 4;
     background-color: rgba(4, 4, 4, 0.5);
