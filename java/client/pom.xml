@@ -200,7 +200,7 @@
      </dependency>
     -->
 
-    <!-- Bck2Brwsr VM presenter for BrowserRunner - - >
+    <!-- Bck2Brwsr VM presenter for BrowserRunner -->
      <dependency>
       <groupId>org.apidesign.bck2brwsr</groupId>
       <artifactId>launcher.http</artifactId>
@@ -224,7 +224,7 @@
         <classifier>bck2brwsr</classifier>
         <type>jar</type>
      </dependency>
-    < ! - - End of Bck2Brwsr VM presenter for BrowserRunner -->
+    <!-- End of Bck2Brwsr VM presenter for BrowserRunner -->
   </dependencies>
   <profiles>
       <profile>

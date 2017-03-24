@@ -79,7 +79,7 @@ final class RecordModel {
             }
             switch (ev.getType()) {
                 case "START":
-                    r = findRecord(records, ev.getId(), ev, true);
+                    r = findRecord(records, ev.getId(), true, false);
                     if (r == null) {
                         r = new Record();
                         r.empty();
@@ -88,7 +88,7 @@ final class RecordModel {
                     records.addFirst(r);
                     break;
                 case "FINISH":
-                    r = findRecord(records, ev.getId(), ev, false);
+                    r = findRecord(records, ev.getId(), false, true);
                     if (r == null) {
                         r = new Record();
                         r.empty();
@@ -107,21 +107,21 @@ final class RecordModel {
                     }
                     break;
                 case "IGNORE":
-                    r = findRecord(records, ev.getRef(), null, null);
+                    r = findRecord(records, ev.getRef(), true, true);
                     if (r != null && !r.isIgnore()) {
                         r.setIgnore(true);
                         ignored++;
                     }
                     break;
                 case "ASSIGN":
-                    r = findRecord(records, ev.getRef(), null, null);
+                    r = findRecord(records, ev.getRef(), true, true);
                     if (r != null) {
                         r.getWho().withContact(findContact(ui.getContacts(), ev.getWho()));
                     }
                     break;
                 case "CONNECT":
-                    Record finish = findRecord(records, ev.getRef(), null, false);
-                    Record start = findRecord(records, ev.getWho(), null, true);
+                    Record finish = findRecord(records, ev.getRef(), false, true);
+                    Record start = findRecord(records, ev.getWho(), true, false);
                     if (start != null && finish != null) {
                         start.setFinish(finish.getFinish());
                         finish.setStart(start.getStart());
@@ -156,9 +156,7 @@ final class RecordModel {
         return newRecords;
     }
 
-    private static Record findRecord(Collection<Record> records, int searchId, Event searchFor, Boolean startOnly) {
-        final boolean checkStart = !Boolean.FALSE.equals(startOnly);
-        final boolean checkFinish = !Boolean.TRUE.equals(startOnly);
+    private static Record findRecord(Collection<Record> records, int searchId, boolean checkStart, boolean checkFinish) {
         for (Record r : records) {
             if (checkStart) {
                 Event ev = r.getStart();
