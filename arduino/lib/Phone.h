@@ -27,6 +27,7 @@ class Phone {
     void synchronizeTime();
     unsigned long syncTimeMillis = 0; // last local time, when the time was synced
     time_t syncTime;  // the date time, that was, when syncTimeMillis was set
+    boolean isStarted;
 };
 
 #endif

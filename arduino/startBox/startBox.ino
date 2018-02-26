@@ -12,6 +12,8 @@
 #define LED_GREEN_PIN   10
 #define LED_BLUE_PIN    3
 
+#define BREAK_AFTER_SENDING 15000   // time in millis, when there is nothing check after sending start message. 
+
 LimitSwitch limitSwitch(LIMIT_SWITCH_PIN);
 RGBLed led(LED_RED_PIN, LED_GREEN_PIN, LED_BLUE_PIN);
 
@@ -27,7 +29,7 @@ unsigned long lastTimeMessageSend = 0; // when the last start message was send
 
 void setup() {
   Serial.begin(9600);
-  led.setColor(250, 250, 0);
+  led.setColor(250, 40, 0);
   led.on();
   phone.init();
 }
@@ -47,13 +49,14 @@ void loop() {
       unsigned long seconds = 0;
       unsigned long milliSeconds = 0;
       phone.getCurrentUnixTimeStamp(&seconds, &milliSeconds);
-      int size = sprintf(cmd, "http://81.0.239.103:7312/timing/add?when=%ld%d&type=START", seconds, milliSeconds);
+      int size = sprintf(cmd, "http://skimb.xelfi.cz/timing/add?when=%ld%d&type=START", seconds, milliSeconds);
       lastTimeMessageSend = current;
       DEBUG_PRINTLN(cmd);
       led.setColor(0, 0, 250);
       led.on();
       phone.sendRequest(cmd);
-      led.off();
+      led.setColor(250, 0, 0);
+      delay(BREAK_AFTER_SENDING);
       timeSignalCheck = 0;
     }
   }

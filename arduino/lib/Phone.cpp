@@ -19,6 +19,7 @@
 Phone::Phone() {
   sim900 = new SoftwareSerial(PIN_PHONE_TX, PIN_PHONE_RX);
   sim900->begin(PHONE_BAUDRATE);
+  isStarted = false;
 }
 
 
@@ -34,6 +35,16 @@ void Phone::init() {
   atCommand("AT+SAPBR=1,1");
   atCommand("AT+HTTPINIT");
   synchronizeTime();
+  if (isStarted) {
+    // sending log message, that the phone was restarted. 
+    char cmd[150];
+    unsigned long seconds = 0;
+    unsigned long milliSeconds = 0;
+    getCurrentUnixTimeStamp(&seconds, &milliSeconds);
+    int size = sprintf(cmd, "http://skimb.xelfi.cz/timing/add?when=%ld%d&type=PHONE_RESET", seconds, milliSeconds);
+    sendRequest(cmd); 
+  }
+  isStarted = false;
 }
 
 /*
@@ -133,6 +144,11 @@ int Phone::read(char *message) {
     if ((millis() - startReading) > 10000) {
       DEBUG_PRINTLN(F("end of time"));
       isEnd = true; 
+      if (count == 0) {
+        // sim900 is not responding
+        // try to reset
+        init();
+      }
     }
   }
   while(sim900->available()) {
@@ -144,6 +160,7 @@ int Phone::read(char *message) {
   
 }
 
+void Phone::sendRequest(char *url) __attribute__((__optimize__("O2")));  // this is a hack due the bug in arduino
 void Phone::sendRequest(char *url) {
   unsigned long start = millis();
   sprintf(buffer, "AT+HTTPPARA=\"URL\",\"%s\"", url);
@@ -165,6 +182,7 @@ int Phone::atHTTPACTIONCommand(int action) {
   boolean state = 0;
   char result[150] = "";
   int index = 0;
+  unsigned long startReading = millis();
   while(!end) {
     if (sim900->available()) {
       char c = sim900->read();
@@ -177,12 +195,17 @@ int Phone::atHTTPACTIONCommand(int action) {
         index++;
       }
     }
+    if ((millis() - startReading) > 10000) {
+      DEBUG_PRINTLN("Problem in reading in atHTTPACTIONComand");
+      init();
+      end = true;
+    }
   }
   DEBUG_PRINTLN(result);
   index -= 3;
   int bytes = -1;
   int decimal = 10;
-  while(result[index] != ',') {
+  while(result[index] != ',' && index > 0) {
     int number = result[index] - '0';
     index--;
     if (bytes > -1) {
@@ -196,10 +219,11 @@ int Phone::atHTTPACTIONCommand(int action) {
 }
 
 void Phone::switchOn() {
-  phoneSwitch();
+  
   int count = 0;
   boolean isPhoneOn = true;
   boolean isEnd = false;
+  phoneSwitch();
   unsigned long startReading = millis();
   int index = 0;
   while (!isEnd && isPhoneOn) {
@@ -217,6 +241,7 @@ void Phone::switchOn() {
     }
     if ((millis() - startReading) > 10000) {
       isEnd = true;
+      DEBUG_PRINTLN("Timeout for reading switching off the phone");
     }
   }
   if (!isPhoneOn) {
