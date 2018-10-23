@@ -1,11 +1,10 @@
 ## Startovací zařízení
-
 Po zapnutí krabičky, se rozsvítí červeně a svítí (nebliká) dokud se telefon neinicializuje. Jakmile telefon naváže spojení se sítí, začne ledka blikat sekundovým intervalem. Barva záleží na síle signálu, jakou telefon má. Signál může mít sílu 0 až 30. 
 
-bliká červeně -> síla signálu je menší než 10 a v takovém případě telefon defakto není schopen komunikovat
-bliká fialově -> síla signálu je mezi 10 a 14, telefon je schopen komunikovat, ale někdy se může stát, že nastane chyba
-bliká oranžově -> síla signálu je mezi 15 a 19, telefon by měl fungovat bez problému, ale odesílání zpráv na server může trvat delší dobu
-bliká zeleně -> síla signálu je větší než 19 a vše je super :)
+* bliká červeně -> síla signálu je menší než 10 a v takovém případě telefon defakto není schopen komunikovat
+* bliká fialově -> síla signálu je mezi 10 a 14, telefon je schopen komunikovat, ale někdy se může stát, že nastane chyba
+* bliká oranžově -> síla signálu je mezi 15 a 19, telefon by měl fungovat bez problému, ale odesílání zpráv na server může trvat delší dobu
+* bliká zeleně -> síla signálu je větší než 19 a vše je super :)
 
 Takže pokud začne blikat telefon sekundovým intervalem danou barvou, víme zhruba jak silný signál je. 
 
