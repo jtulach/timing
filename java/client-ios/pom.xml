@@ -20,7 +20,6 @@
         <project.mainclass>org.apidesign.gate.timing.iOSMain</project.mainclass>
         <netbeans.compile.on.save>none</netbeans.compile.on.save>
         <robovm.version>1.8.0</robovm.version>
-        <presenters.version>1.1</presenters.version>
     </properties>
     <build>
         <plugins>
