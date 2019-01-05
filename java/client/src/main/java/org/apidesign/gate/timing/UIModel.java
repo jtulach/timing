@@ -32,6 +32,8 @@ import org.apidesign.gate.timing.shared.Events;
 
     @Property(name = "events", type = Event.class, array = true),
     @Property(name = "records", type = Record.class, array = true),
+    
+    @Property(name = "timers", array = true, type = StopWatch.class),
 })
 final class UIModel {
 
@@ -72,6 +74,35 @@ final class UIModel {
             model.getChoose().setContact(data);
         }
         model.setChoose(null);
+    }
+    
+    @ModelOperation
+    @Function
+    static void addTimer(UI model, long whenStarted) {
+        if (whenStarted < 1000 * 1000) {
+            whenStarted = System.currentTimeMillis();
+        }
+
+        StopWatch timer = new StopWatch();
+        model.getTimers().add(0, timer);
+        timer.start(whenStarted);
+    }
+
+    @Function
+    static void removeTimer(UI model, StopWatch data) {
+        data.stop();
+        model.getTimers().remove(data);
+    }
+
+    @Function
+    static void stopTimer(UI model, StopWatch data) {
+        if (whenStarted < 1000 * 1000) {
+            whenStarted = System.currentTimeMillis();
+        }
+
+        StopWatch timer = new StopWatch();
+        model.getTimers().add(0, timer);
+        timer.start(whenStarted);
     }
 
     @Function

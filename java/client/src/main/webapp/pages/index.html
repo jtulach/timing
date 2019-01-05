@@ -68,7 +68,7 @@
         </script>
 
         <script type="text/html" id="list-events">
-            <div id="events-list" data-bind="foreach: records">
+            <div id="events-list" data-bind="foreach: timers">
                 <div class="pure-g">
                     <div class="pure-hidden-xs pure-u-md-1-5">
                         <div data-bind="template: { name: 'avatar', data: who }"/>
@@ -76,7 +76,6 @@
                     </div>
                     <div class="pure-u-4-5 ">
                         <div class="event" >
-                            <span data-bind="visible: lengthMillis, text: length"></span>
                             <span class="pure-hidden-sm pure-hidden-lg pure-hidden-md pure-hidden-xl pure-u-1-5">
                                 <span data-bind="with: who">
                                 <span data-bind="with: contact">
@@ -84,19 +83,18 @@
                                 </span>
                                 </span>
                             </span>
-                            <span data-bind="visible: lengthMillis() == 0, with: start">
-                                <span data-bind="text: type"></span>
-                                @ <span data-bind="text: shortWhen"></span>
+                            <span data-bind="click: $root.stopTimer">
+                                <span data-bind="text: seconds"></span>:<span data-bind="text: hundreds"></span>
                             </span>
-                            <span data-bind="visible: !start(), with: finish">
-                                <span data-bind="text: type"></span>
-                                @ <span data-bind="text: shortWhen"></span>
+                            <span class="awesome-button" data-bind="click: $root.removeTimer">
+                                <i class=" fa fa-minus-circle"></i>
                             </span>
                         </div> 
 
+                        <!--
                         <button class="pure-button " data-bind="enable: next, click: $root.nextRecord, text: nextTime"><span>Další</span></button>
                         <button class="pure-button " data-bind="enable: prev, click: $root.prevRecord, text: prevTime"><span>Předchozí</span></button>
-                        <button class="pure-button " data-bind="click: $root.ignoreEvent"><span>Ignorovat</span></button>
+                        -->
                     </div>
                     <div class="pure-hidden-sm pure-hidden-lg pure-hidden-md pure-hidden-xl pure-u-1-5">
                         <div class="awesome-button"  data-bind="click: $root.ignoreEvent">
@@ -109,6 +107,9 @@
                 Startuje
                 <div data-bind="template: { name: 'avatar', data: nextOnStart }">
                 </div>
+            </div>
+            <div class="awesome-button" id="sticky-footer-button" data-bind="click: $root.addTimer">
+                <i class=" fa fa-plus-circle"></i>
             </div>
         </script>
 
