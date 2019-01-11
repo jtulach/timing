@@ -37,6 +37,12 @@ final class RecordModel {
         return digits;
     }
 
+    @ComputedProperty
+    static boolean valid(Event start, Event finish, Current current) {
+        long actual = actualTime(finish, current);
+        return validActual(actual, start);
+    }
+
     private static boolean validActual(long actual, Event start) {
         return start != null && actual >= start.getWhen();
     }
