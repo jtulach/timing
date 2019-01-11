@@ -35,11 +35,16 @@ final class StopWatchModel {
     }
     
     @ComputedProperty
-    static String seconds(long start, long current) {
-        if (current < start) {
+    static String seconds(long start, long stop, long current) {
+        long actual = stop;
+        if (stop > 0) {
+        } else {
+            actual = current;
+        }
+        if (actual < start) {
             return "--";
         }
-        long time = (current - start) / 1000L;
+        long time = (actual - start) / 1000L;
         String digits = Long.toString(time);
         if (digits.length() < 2) {
             digits = "0" + digits;
@@ -48,11 +53,16 @@ final class StopWatchModel {
     }
     
     @ComputedProperty
-    static String hundreds(long start, long current) {
-        if (current < start) {
+    static String hundreds(long start, long stop, long current) {
+        long actual = stop;
+        if (stop > 0) {
+        } else {
+            actual = current;
+        }
+        if (actual < start) {
             return "--";
         }
-        long time = current - start;
+        long time = actual - start;
         String digits = Long.toString(time % 100);
         if (digits.length() < 2) {
             digits = "0" + digits;

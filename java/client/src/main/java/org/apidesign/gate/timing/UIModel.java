@@ -90,19 +90,13 @@ final class UIModel {
 
     @Function
     static void removeTimer(UI model, StopWatch data) {
-        data.stop();
+        data.stop(System.currentTimeMillis());
         model.getTimers().remove(data);
     }
 
     @Function
     static void stopTimer(UI model, StopWatch data) {
-        if (whenStarted < 1000 * 1000) {
-            whenStarted = System.currentTimeMillis();
-        }
-
-        StopWatch timer = new StopWatch();
-        model.getTimers().add(0, timer);
-        timer.start(whenStarted);
+        data.stop(System.currentTimeMillis());
     }
 
     @Function

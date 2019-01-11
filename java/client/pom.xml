@@ -21,6 +21,7 @@
     <project.mainclass>org.apidesign.gate.timing.Main</project.mainclass>
     <exec.java.bin>${java.home}/bin/java</exec.java.bin>
     <exec.debug.arg>-Ddebug=false</exec.debug.arg>
+    <agent.props>-javaagent:${project.build.directory}/springloaded.jar</agent.props>
   </properties>
   <build>
       <plugins>
@@ -66,7 +67,7 @@
                    <arguments>
                        <argument>-classpath</argument>
                        <classpath/>
-                       <argument>-javaagent:${project.build.directory}/springloaded.jar</argument>
+                       <argument>${agent.props}</argument>
                        <argument>-Xverify:none</argument>
                        <argument>-Dbrowser.rootdir=${basedir}/src/main/webapp/</argument>
                        <argument>-Dnetbeans.inspect.port=${netbeans.inspect.port}</argument>
@@ -185,7 +186,7 @@
      </dependency>
     -->
 
-    <!-- Bck2Brwsr VM presenter for BrowserRunner -->
+    <!-- Bck2Brwsr VM presenter for BrowserRunner 
      <dependency>
       <groupId>org.apidesign.bck2brwsr</groupId>
       <artifactId>launcher.http</artifactId>
@@ -200,6 +201,13 @@
       <classifier>bck2brwsr</classifier>
       <scope>test</scope>
       <type>jar</type>
+    </dependency>
+    -->
+    <dependency>
+        <groupId>org.openjfx</groupId>
+        <artifactId>javafx-web</artifactId>
+        <version>11</version>
+        <scope>test</scope>
     </dependency>
     <dependency>
         <groupId>com.dukescript.api</groupId>
@@ -222,6 +230,12 @@
                   <groupId>org.netbeans.html</groupId>
                   <artifactId>net.java.html.boot.fx</artifactId>
                   <version>${net.java.html.version}</version>
+                  <scope>runtime</scope>
+              </dependency>
+              <dependency>
+                  <groupId>org.openjfx</groupId>
+                  <artifactId>javafx-web</artifactId>
+                  <version>11</version>
                   <scope>runtime</scope>
               </dependency>
           </dependencies>
@@ -295,6 +309,15 @@
                   <scope>runtime</scope>
               </dependency>
           </dependencies>
+      </profile>
+      <profile>
+          <id>jdk-11</id>
+          <activation>
+              <jdk>!1.8</jdk>
+          </activation>
+          <properties>
+              <agent.props>-DignoreAgent=true</agent.props>
+          </properties>
       </profile>
   </profiles>
 </project>
