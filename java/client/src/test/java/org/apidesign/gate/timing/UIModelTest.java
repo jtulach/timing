@@ -187,10 +187,6 @@ public class UIModelTest {
 
         assertEquals("Start event", eventStart1, startRecord.getStart());
         assertEquals("1st finish used", eventFinish, startRecord.getFinish());
-        assertNull("No earlier finish", startRecord.getPrev());
-        assertEquals("00:00", startRecord.getPrevTime());
-        assertNull("No next finish", startRecord.getNext());
-        assertEquals("00:00", startRecord.getNextTime());
 
         assertEquals("The last finish chooses earliest start", "19:00", startRecord.getLength());
 
@@ -214,9 +210,5 @@ public class UIModelTest {
 
         assertEquals("Start event", eventStart, startRecord.getStart());
         assertNull("No finish yet", startRecord.getFinish());
-        assertNull("No earlier finish", startRecord.getPrev());
-        assertEquals("00:00", startRecord.getPrevTime());
-        assertNull("No next finish", startRecord.getNext());
-        assertEquals("00:00", startRecord.getNextTime());
     }
 }

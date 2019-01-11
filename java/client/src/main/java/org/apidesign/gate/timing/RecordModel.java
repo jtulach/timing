@@ -20,10 +20,51 @@ import org.apidesign.gate.timing.shared.Events;
     @Property(name = "finish", type = Event.class),
     @Property(name = "ignore", type = boolean.class),
     @Property(name = "who", type = Avatar.class),
-    @Property(name = "next", type = Event.class),
-    @Property(name = "prev", type = Event.class),
+    @Property(name = "current", type = Current.class)
 })
 final class RecordModel {
+    @ComputedProperty
+    static String seconds(Event start, Event finish, Current current) {
+        long actual = actualTime(finish, current);
+        if (!validActual(actual, start)) {
+            return "--";
+        }
+        long time = (actual - start.getWhen()) / 1000L;
+        String digits = Long.toString(time);
+        if (digits.length() < 2) {
+            digits = "0" + digits;
+        }
+        return digits;
+    }
+
+    private static boolean validActual(long actual, Event start) {
+        return start != null && actual >= start.getWhen();
+    }
+
+    private static long actualTime(Event finish, Current current) {
+        long actual;
+        if (finish != null && finish.getWhen() > 0) {
+            actual = finish.getWhen();
+        } else {
+            actual = current.getMillis();
+        }
+        return actual;
+    }
+    
+    @ComputedProperty
+    static String hundreds(Event start, Event finish, Current current) {
+        long actual = actualTime(finish, current);
+        if (!validActual(actual, start)) {
+            return "--";
+        }
+        long time = actual - start.getWhen();
+        String digits = Long.toString(time % 100);
+        if (digits.length() < 2) {
+            digits = "0" + digits;
+        }
+        return digits;
+    }
+    
     static final Comparator<Record> COMPARATOR = (r1, r2) -> {
         return r2.getStart().getId() - r1.getStart().getId();
     };
@@ -31,7 +72,6 @@ final class RecordModel {
     @ModelOperation
     static void empty(Record model) {
         model.withStart(null).withFinish(null).withIgnore(false);
-        model.withPrev(null).withNext(null);
         model.getWho().withContact(null);
     }
 
@@ -50,16 +90,6 @@ final class RecordModel {
         long sec = time / 1000L;
         long cent = (time % 1000L) / 10;
         return twoDigits(sec) + ":" + twoDigits(cent);
-    }
-
-    @ComputedProperty
-    static String nextTime(Event start, Event next) {
-        return length(start, next);
-    }
-
-    @ComputedProperty
-    static String prevTime(Event start, Event prev) {
-        return length(start, prev);
     }
 
     static String twoDigits(long value) {
@@ -82,6 +112,7 @@ final class RecordModel {
                     r = findRecord(records, ev.getId(), true, false);
                     if (r == null) {
                         r = new Record();
+                        r.withCurrent(ui.getCurrent());
                         r.empty();
                         r.withStart(ev);
                     }
@@ -91,6 +122,7 @@ final class RecordModel {
                     r = findRecord(records, ev.getId(), false, true);
                     if (r == null) {
                         r = new Record();
+                        r.withCurrent(ui.getCurrent());
                         r.empty();
                         r.withFinish(ev);
                         ListIterator<Record> it = records.listIterator(records.size());
@@ -145,8 +177,6 @@ final class RecordModel {
             }
             if (r.getStart() != null) {
                 NavigableSet<Event> onlyNewer = events.tailSet(r.getStart(), true);
-                r.setNext(onlyNewer.higher(r.getFinish()));
-                r.setPrev(onlyNewer.lower(r.getFinish()));
             }
 
             if (i < newRecords.length) {
@@ -199,8 +229,6 @@ final class RecordModel {
         }
         data.setFinish(currentFinish);
         NavigableSet<Event> onlyNewer = events.tailSet(data.getStart(), true);
-        data.setNext(onlyNewer.higher(currentFinish));
-        data.setPrev(onlyNewer.lower(currentFinish));
         for (Record r : records) {
             if (r.getStart() == null && r.getFinish() == currentFinish) {
                 r.getWho().setContact(data.getWho().getContact());

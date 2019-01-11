@@ -21,6 +21,8 @@ import org.apidesign.gate.timing.shared.Events;
     @Property(name = "pending", type = String.class),
     @Property(name = "message", type = String.class),
     @Property(name = "alert", type = boolean.class),
+    
+    @Property(name = "current", type = Current.class),
 
     @Property(name = "choose", type = Avatar.class),
     @Property(name = "contacts", type = Contact.class, array = true),
@@ -32,8 +34,6 @@ import org.apidesign.gate.timing.shared.Events;
 
     @Property(name = "events", type = Event.class, array = true),
     @Property(name = "records", type = Record.class, array = true),
-    
-    @Property(name = "timers", array = true, type = StopWatch.class),
 })
 final class UIModel {
 
@@ -82,21 +82,22 @@ final class UIModel {
         if (whenStarted < 1000 * 1000) {
             whenStarted = System.currentTimeMillis();
         }
-
+/*
         StopWatch timer = new StopWatch();
         model.getTimers().add(0, timer);
         timer.start(whenStarted);
+        */
     }
 
     @Function
-    static void removeTimer(UI model, StopWatch data) {
-        data.stop(System.currentTimeMillis());
-        model.getTimers().remove(data);
+    static void removeTimer(UI model, Record data) {
+//        data.stop(System.currentTimeMillis());
+//        model.getTimers().remove(data);
     }
 
     @Function
-    static void stopTimer(UI model, StopWatch data) {
-        data.stop(System.currentTimeMillis());
+    static void stopTimer(UI model, Record data) {
+//        data.stop(System.currentTimeMillis());
     }
 
     //
@@ -317,6 +318,7 @@ final class UIModel {
         uiModel.setChoose(null);
         uiModel.applyBindings();
         uiModel.connect();
+        uiModel.getCurrent().start();
     }
 
 }
