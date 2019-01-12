@@ -51,10 +51,15 @@
                     </div>
                 </div>
             </div>
-
             <div class="awesome-button" id="sticky-footer-button" data-bind="click: $root.addContact">
                 <i class=" fa fa-plus-circle"></i>
             </div>
+            <br>
+            <br>
+            <br>
+            <br>
+            <br>
+            <br>
         </script>
         
         <script type="text/html" id="avatar">
@@ -103,9 +108,6 @@
                 <div data-bind="template: { name: 'avatar', data: nextOnStart }">
                 </div>
             </div>
-            <div class="awesome-button" id="sticky-footer-button" data-bind="click: $root.addTimer">
-                <i class=" fa fa-plus-circle"></i>
-            </div>
         </script>
 
         <script type="text/html" id="edit-contact">
@@ -141,7 +143,7 @@
         <div data-bind="template: { name: 'edit-contact', if: edited, data: edited }">
         </div>
 
-        <div id="sticky-footer">
+        <div id="sticky-footer" data-bind="visible: !edited()">
             <form class="pure-form">
                 <fieldset>
                     <input class="pure-input-2-3" type="url" data-bind="textInput: url" >

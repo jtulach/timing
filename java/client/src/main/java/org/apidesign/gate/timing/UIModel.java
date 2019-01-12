@@ -76,19 +76,6 @@ final class UIModel {
         model.setChoose(null);
     }
     
-    @ModelOperation
-    @Function
-    static void addTimer(UI model, long whenStarted) {
-        if (whenStarted < 1000 * 1000) {
-            whenStarted = System.currentTimeMillis();
-        }
-/*
-        StopWatch timer = new StopWatch();
-        model.getTimers().add(0, timer);
-        timer.start(whenStarted);
-        */
-    }
-
     @Function
     static void removeTimer(UI model, Record data) {
 //        data.stop(System.currentTimeMillis());

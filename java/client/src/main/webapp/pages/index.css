@@ -85,7 +85,7 @@
 #sticky-footer-img {
     background-color: #2d3e50;
     position: fixed;
-    top: 0px;
+    bottom: 0px;
     right: 0px;
     padding: 1em;
     padding-top: 2em;
