@@ -44,7 +44,7 @@ final class RecordModel {
     }
 
     private static boolean validActual(long actual, Event start) {
-        return start != null && actual >= start.getWhen();
+        return start != null;// && actual >= start.getWhen();
     }
 
     private static long actualTime(Event finish, Current current) {
