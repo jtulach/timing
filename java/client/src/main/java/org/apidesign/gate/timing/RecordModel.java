@@ -10,6 +10,7 @@ import java.util.TreeSet;
 import net.java.html.json.ComputedProperty;
 import net.java.html.json.Model;
 import net.java.html.json.ModelOperation;
+import net.java.html.json.Models;
 import net.java.html.json.Property;
 import org.apidesign.gate.timing.shared.Contact;
 import org.apidesign.gate.timing.shared.Event;
@@ -168,8 +169,7 @@ final class RecordModel {
             }
         }
 
-        int size = Math.min(limit, records.size() - ignored);
-        Record[] newRecords = new Record[size];
+        List<Record> newRecords = Models.asList();
         TreeSet<Event> events = new TreeSet<>(Events.TIMELINE);
         for (Record r : records) {
             if (!r.isIgnore() && r.getFinish() != null) {
@@ -185,11 +185,9 @@ final class RecordModel {
                 NavigableSet<Event> onlyNewer = events.tailSet(r.getStart(), true);
             }
 
-            if (i < newRecords.length) {
-                newRecords[i++] = r;
-            }
+            newRecords.add(r);
         }
-        return newRecords;
+        return newRecords.toArray(new Record[newRecords.size()]);
     }
 
     private static Record findRecord(Collection<Record> records, int searchId, boolean checkStart, boolean checkFinish) {

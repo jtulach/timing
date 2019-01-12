@@ -11,6 +11,7 @@ import net.java.html.json.ComputedProperty;
 import net.java.html.json.Function;
 import net.java.html.json.Model;
 import net.java.html.json.ModelOperation;
+import net.java.html.json.Models;
 import net.java.html.json.OnPropertyChange;
 import net.java.html.json.OnReceive;
 import net.java.html.json.Property;
@@ -46,7 +47,7 @@ final class UIModel {
     static boolean showContacts(Contact edited, Avatar choose) {
         return choose != null && edited == null;
     }
-
+    
     @Function
     static void chooseContact(UI ui, Avatar data) {
         ui.setChoose(data);
