@@ -135,6 +135,9 @@ final class RecordModel {
                         ListIterator<Record> it = records.listIterator(records.size());
                         while (it.hasPrevious()) {
                             Record prev = it.previous();
+                            if (prev.isIgnore()) {
+                                continue;
+                            }
                             if (prev.getFinish() == null) {
                                 prev.withFinish(ev);
                                 break;

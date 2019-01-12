@@ -11,7 +11,6 @@ import net.java.html.json.ComputedProperty;
 import net.java.html.json.Function;
 import net.java.html.json.Model;
 import net.java.html.json.ModelOperation;
-import net.java.html.json.Models;
 import net.java.html.json.OnPropertyChange;
 import net.java.html.json.OnReceive;
 import net.java.html.json.Property;
@@ -77,12 +76,6 @@ final class UIModel {
         model.setChoose(null);
     }
     
-    @Function
-    static void removeTimer(UI model, Record data) {
-//        data.stop(System.currentTimeMillis());
-//        model.getTimers().remove(data);
-    }
-
     @Function
     static void stopTimer(UI model, Record data) {
 //        data.stop(System.currentTimeMillis());
