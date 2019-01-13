@@ -1,6 +1,7 @@
 package org.apidesign.gate.timing;
 
 import java.util.Arrays;
+import java.util.Random;
 import org.apidesign.gate.timing.shared.Contact;
 import net.java.html.junit.BrowserRunner;
 import org.apidesign.gate.timing.shared.Event;
@@ -210,5 +211,31 @@ public class UIModelTest {
 
         assertEquals("Start event", eventStart, startRecord.getStart());
         assertNull("No finish yet", startRecord.getFinish());
+    }
+
+    @Test
+    public void timeWithDifferentZone() {
+        Random random = new Random();
+        final int offset = random.nextInt(10) - 5;
+        assertSecondsHundreds(offset);
+    }
+
+    @Test
+    public void timeWithSameZone() {
+        assertSecondsHundreds(0);
+    }
+
+    private void assertSecondsHundreds(final int offset) {
+        Current c = new Current();
+        final long now = System.currentTimeMillis();
+        c.setMillis(now);
+        Record r = new Record();
+        r.setCurrent(c);
+
+        long hour = 3600 * 1000 * offset;
+        r.getStart().setWhen(now - hour - 1432);
+
+        assertEquals("One second (" + offset + ")", "01", r.getSeconds());
+        assertEquals("Hundreds (" + offset + ")", "43", r.getHundreds());
     }
 }

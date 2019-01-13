@@ -31,7 +31,7 @@ final class RecordModel {
             return "--";
         }
         long time = (actual - start.getWhen()) / 1000L;
-        String digits = Long.toString(time);
+        String digits = Long.toString(time % 3600);
         if (digits.length() < 2) {
             digits = "0" + digits;
         }
@@ -57,7 +57,7 @@ final class RecordModel {
         }
         return actual;
     }
-    
+
     @ComputedProperty
     static String hundreds(Event start, Event finish, Current current) {
         long actual = actualTime(finish, current);
@@ -65,13 +65,13 @@ final class RecordModel {
             return "--";
         }
         long time = actual - start.getWhen();
-        String digits = Long.toString(time % 100);
+        String digits = Long.toString(time % 1000 / 10);
         if (digits.length() < 2) {
             digits = "0" + digits;
         }
         return digits;
     }
-    
+
     static final Comparator<Record> COMPARATOR = (r1, r2) -> {
         return r2.getStart().getId() - r1.getStart().getId();
     };
