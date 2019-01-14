@@ -17,7 +17,7 @@ final class CurrentModel {
     void start(Current model) {
         if (task == null) {
             task = new PingMillis(model);
-            MILLIS.scheduleAtFixedRate(task, 10, 10);
+            MILLIS.scheduleAtFixedRate(task, 100, 251);
         }
     }
     
