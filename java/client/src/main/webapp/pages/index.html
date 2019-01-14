@@ -75,36 +75,27 @@
         <script type="text/html" id="list-events">
             <div id="events-list" data-bind="foreach: records">
                 <div class="pure-g" data-bind="visible: valid">
-                    <div class="pure-hidden-xs pure-u-md-1-5">
-                        <div data-bind="template: { name: 'avatar', data: who }"/>
+                    <div class="pure-u-2-8">
+                        <div data-bind="template: { name: 'avatar', data: who }">
                         </div>
                     </div>
-                    <div class="pure-u-4-5 ">
-                        <div class="event" >
-                            <span class="pure-hidden-sm pure-hidden-lg pure-hidden-md pure-hidden-xl pure-u-1-5">
-                                <span data-bind="with: who">
-                                <span data-bind="with: contact">
-                                    <spand data-bind="text: name"/>
-                                </span>
-                                </span>
-                            </span>
-                            <span data-bind="ifnot: firstFinished">
-                                <span class="awesome-button">
-                                    <i class=" fa fa-clock-o"></i>
-                                </span>
-                            </span>
-                            <span data-bind="if: firstFinished">
-                                <span class="awesome-button"  data-bind="click: $root.continueTimer">
-                                    <i class=" fa fa-play"></i>
-                                </span>
-                            </span>
-                            <span>
-                                <span data-bind="text: seconds"></span>:<span data-bind="text: hundreds"></span>
-                            </span>
-                        </div>
+                    <div class="pure-u-1-8">
+                        <span class="awesome-button" data-bind="ifnot: firstFinished">
+                            <i class=" fa fa-clock-o"></i>
+                        </span>
+                        <span class="awesome-button"  data-bind="if: firstFinished, click: $root.continueTimer">
+                            <i class=" fa fa-play"></i>
+                        </span>
                     </div>
-                    <div class="awesome-button"  data-bind="click: $root.ignoreEvent">
-                        <i class=" fa fa-trash"></i>
+                    <div class="pure-u-3-8">
+                        <span>
+                            <span data-bind="text: seconds"></span>:<span data-bind="text: hundreds"></span>
+                        </span>
+                    </div>
+                    <div class="pure-u-1-8">
+                        <span class="awesome-button"  data-bind="click: $root.ignoreEvent">
+                            <i class=" fa fa-trash"></i>
+                        </span>
                     </div>
                 </div>
             </div>
