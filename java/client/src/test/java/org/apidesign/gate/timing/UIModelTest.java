@@ -1,12 +1,19 @@
 package org.apidesign.gate.timing;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
+import net.java.html.BrwsrCtx;
+import net.java.html.json.Models;
 import org.apidesign.gate.timing.shared.Contact;
 import net.java.html.junit.BrowserRunner;
 import org.apidesign.gate.timing.shared.Event;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -211,6 +218,67 @@ public class UIModelTest {
 
         assertEquals("Start event", eventStart, startRecord.getStart());
         assertNull("No finish yet", startRecord.getFinish());
+    }
+
+    @Test
+    public void continueExistingRide() throws Exception {
+        UI ui = new UI();
+        InputStream is = new ByteArrayInputStream(
+("[\n" +
+"    {\n" +
+"        \"id\": 7,\n" +
+"        \"when\": 1547433305864,\n" +
+"        \"type\": \"IGNORE\",\n" +
+"        \"ref\": 6,\n" +
+"        \"who\": 0\n" +
+"    }, {\n" +
+"        \"id\": 6,\n" +
+"        \"when\": 1547433061965,\n" +
+"        \"type\": \"FINISH\",\n" +
+"        \"ref\": 0,\n" +
+"        \"who\": 0\n" +
+"    }, {\n" +
+"        \"id\": 5,\n" +
+"        \"when\": 1547409752796,\n" +
+"        \"type\": \"ASSIGN\",\n" +
+"        \"ref\": 4,\n" +
+"        \"who\": 1\n" +
+"    }, {\n" +
+"        \"id\": 4,\n" +
+"        \"when\": 1547409299881,\n" +
+"        \"type\": \"START\",\n" +
+"        \"ref\": 0,\n" +
+"        \"who\": 0\n" +
+"    }, {\n" +
+"        \"id\": 3,\n" +
+"        \"when\": 1547409180432,\n" +
+"        \"type\": \"ASSIGN\",\n" +
+"        \"ref\": 2,\n" +
+"        \"who\": 1\n" +
+"    }, {\n" +
+"        \"id\": 2,\n" +
+"        \"when\": 1547409180412,\n" +
+"        \"type\": \"START\",\n" +
+"        \"ref\": 0,\n" +
+"        \"who\": 0\n" +
+"    }, {\n" +
+"        \"id\": 1,\n" +
+"        \"when\": 1547409137637,\n" +
+"        \"type\": \"INITIALIZED\",\n" +
+"        \"ref\": 0,\n" +
+"        \"who\": 0\n" +
+"    }\n" +
+"]").getBytes("UTF-8")
+        );
+
+        List<Event> arr = new ArrayList<>();
+        final BrwsrCtx ctx = BrwsrCtx.findDefault(ui.getClass());
+        Models.parse(ctx, Event.class, is, arr);
+
+        assertEquals("Seven elements: " + arr, 7, arr.size());
+
+        List<Record> res = Arrays.asList(RecordModel.compute(ui, arr, 10, true));
+        assertEquals("Two starts left: " + res, 2, res.size());
     }
 
     @Test

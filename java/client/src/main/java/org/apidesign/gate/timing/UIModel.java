@@ -21,7 +21,7 @@ import org.apidesign.gate.timing.shared.Events;
     @Property(name = "pending", type = String.class),
     @Property(name = "message", type = String.class),
     @Property(name = "alert", type = boolean.class),
-    
+
     @Property(name = "current", type = Current.class),
 
     @Property(name = "choose", type = Avatar.class),
@@ -34,6 +34,7 @@ import org.apidesign.gate.timing.shared.Events;
 
     @Property(name = "events", type = Event.class, array = true),
     @Property(name = "records", type = Record.class, array = true),
+    @Property(name = "onlyValid", type = boolean.class),
 })
 final class UIModel {
 
@@ -46,7 +47,7 @@ final class UIModel {
     static boolean showContacts(Contact edited, Avatar choose) {
         return choose != null && edited == null;
     }
-    
+
     @Function
     static void chooseContact(UI ui, Avatar data) {
         ui.setChoose(data);
@@ -75,9 +76,15 @@ final class UIModel {
         }
         model.setChoose(null);
     }
-    
+
     @Function
-    static void stopTimer(UI model, Record data) {
+    static void continueTimer(UI model, Record data) {
+        Event f = data.getFinish();
+        if (f != null) {
+            data.setIgnore(true);
+            data.setFinish(null);
+            model.sendEvent(model.getUrl(), "IGNORE", "" + f.getId());
+        }
 //        data.stop(System.currentTimeMillis());
     }
 
@@ -96,7 +103,7 @@ final class UIModel {
 
     @OnPropertyChange("events")
     static void onEventsChangeUpdateRecords(UI ui) {
-        Record[] records = RecordModel.compute(ui, ui.getEvents(), 10);
+        Record[] records = RecordModel.compute(ui, ui.getEvents(), 10, ui.isOnlyValid());
         ui.withRecords(records);
         ui.setMessage("Máme tu " + records.length + " události.");
     }
@@ -297,6 +304,7 @@ final class UIModel {
         uiModel.setEdited(null);
         uiModel.setSelected(null);
         uiModel.setChoose(null);
+        uiModel.setOnlyValid(true);
         uiModel.applyBindings();
         uiModel.connect();
         uiModel.getCurrent().start();

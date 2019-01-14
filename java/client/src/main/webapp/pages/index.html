@@ -61,7 +61,7 @@
             <br>
             <br>
         </script>
-        
+
         <script type="text/html" id="avatar">
             <div class="avatar" data-bind="click: $root.chooseContact, with: contact">
                 <div>
@@ -88,15 +88,23 @@
                                 </span>
                                 </span>
                             </span>
-                            <span data-bind="click: $root.stopTimer">
+                            <span data-bind="ifnot: firstFinished">
+                                <span class="awesome-button">
+                                    <i class=" fa fa-clock-o"></i>
+                                </span>
+                            </span>
+                            <span data-bind="if: firstFinished">
+                                <span class="awesome-button"  data-bind="click: $root.continueTimer">
+                                    <i class=" fa fa-play"></i>
+                                </span>
+                            </span>
+                            <span>
                                 <span data-bind="text: seconds"></span>:<span data-bind="text: hundreds"></span>
                             </span>
-                        </div> 
-                    </div>
-                    <div class="pure-hidden-sm pure-hidden-lg pure-hidden-md pure-hidden-xl pure-u-1-5">
-                        <div class="awesome-button"  data-bind="click: $root.ignoreEvent">
-                            <i class=" fa fa-trash"></i>
                         </div>
+                    </div>
+                    <div class="awesome-button"  data-bind="click: $root.ignoreEvent">
+                        <i class=" fa fa-trash"></i>
                     </div>
                 </div>
             </div>

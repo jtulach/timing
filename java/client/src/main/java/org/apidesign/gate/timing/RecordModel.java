@@ -20,6 +20,7 @@ import org.apidesign.gate.timing.shared.Events;
     @Property(name = "start", type = Event.class),
     @Property(name = "finish", type = Event.class),
     @Property(name = "ignore", type = boolean.class),
+    @Property(name = "firstFinished", type = boolean.class),
     @Property(name = "who", type = Avatar.class),
     @Property(name = "current", type = Current.class)
 })
@@ -116,6 +117,9 @@ final class RecordModel {
     }
 
     static Record[] compute(UI ui, List<Event> arr, int limit) {
+        return compute(ui, arr, limit, false);
+    }
+    static Record[] compute(UI ui, List<Event> arr, int limit, boolean onlyValid) {
         LinkedList<Record> records = new LinkedList<>();
         int ignored = 0;
         for (Event ev : arr) {
@@ -157,11 +161,20 @@ final class RecordModel {
                         r.setFinish(ev);
                     }
                     break;
-                case "IGNORE":
-                    r = findRecord(records, ev.getRef(), true, true);
-                    if (r != null && !r.isIgnore()) {
-                        r.setIgnore(true);
-                        ignored++;
+                case "IGNORE": {
+                        r = findRecord(records, ev.getRef(), true, true);
+                        if (r != null && !r.isIgnore()) {
+                            r.setIgnore(true);
+                            ignored++;
+                            Record ignoresFinish = findRecord(records, r.getFinish(), false, true);
+                            if (ignoresFinish != null) {
+                                ignoresFinish.setFinish(null);
+                            }
+                            Record ignoresStart = findRecord(records, r.getStart(), true, false);
+                            if (ignoresStart != null) {
+                                ignoresStart.setStart(null);
+                            }
+                        }
                     }
                     break;
                 case "ASSIGN":
@@ -189,14 +202,18 @@ final class RecordModel {
             }
         }
         int i = 0;
+        boolean someFinished = false;
         for (Record r : records) {
             if (r.isIgnore()) {
                 continue;
             }
-            if (r.getStart() != null) {
-                NavigableSet<Event> onlyNewer = events.tailSet(r.getStart(), true);
+            if (onlyValid && !r.isValid()) {
+                continue;
             }
-
+            if (r.getFinish() != null && !someFinished) {
+                r.setFirstFinished(true);
+                someFinished = true;
+            }
             newRecords.add(r);
         }
         return newRecords.toArray(new Record[newRecords.size()]);
@@ -204,6 +221,10 @@ final class RecordModel {
 
     private static Record findRecord(Collection<Record> records, int searchId, boolean checkStart, boolean checkFinish) {
         for (Record r : records) {
+            if (r.isIgnore()) {
+                continue;
+            }
+
             if (checkStart) {
                 Event ev = r.getStart();
                 if (ev != null && ev.getId() == searchId) {
@@ -218,6 +239,13 @@ final class RecordModel {
             }
         }
         return null;
+    }
+    private static Record findRecord(Collection<Record> records, Event searchEvent, boolean checkStart, boolean checkFinish) {
+        if (searchEvent == null) {
+            return null;
+        } else {
+            return findRecord(records, searchEvent.getId(), checkStart, checkFinish);
+        }
     }
 
     private static Contact findContact(List<Contact> contacts, int who) {
