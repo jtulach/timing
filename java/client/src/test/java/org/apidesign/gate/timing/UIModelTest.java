@@ -25,7 +25,7 @@ public class UIModelTest {
     private static void loadEvents(UI model, Event... events) {
         UIModel.loadEvents(model, Arrays.asList(events));
         UIModel.onEventsChangeUpdateRecords(model);
-        UIModel.onRecordsChangeUpdateWho(model);
+        model.onRecordsChangeUpdateWho();
     }
 
     @Test public void addNewSetsEdited() {

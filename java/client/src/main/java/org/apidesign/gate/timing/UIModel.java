@@ -1,6 +1,7 @@
 package org.apidesign.gate.timing;
 
 import java.util.Collections;
+import java.util.Iterator;
 import org.apidesign.gate.timing.js.Dialogs;
 import org.apidesign.gate.timing.shared.Contact;
 import org.apidesign.gate.timing.shared.Event;
@@ -11,12 +12,13 @@ import net.java.html.json.ComputedProperty;
 import net.java.html.json.Function;
 import net.java.html.json.Model;
 import net.java.html.json.ModelOperation;
+import net.java.html.json.Models;
 import net.java.html.json.OnPropertyChange;
 import net.java.html.json.OnReceive;
 import net.java.html.json.Property;
 import org.apidesign.gate.timing.shared.Events;
 
-@Model(className = "UI", targetId="", builder="with", properties = {
+@Model(className = "UI", targetId="", builder="with", instance = true, properties = {
     @Property(name = "url", type = String.class),
     @Property(name = "pending", type = String.class),
     @Property(name = "message", type = String.class),
@@ -37,6 +39,7 @@ import org.apidesign.gate.timing.shared.Events;
     @Property(name = "onlyValid", type = boolean.class),
 })
 final class UIModel {
+    private final List<Contact> asStarted = Models.asList();
 
     @ComputedProperty
     static boolean showEvents(Contact edited, Avatar choose) {
@@ -108,8 +111,9 @@ final class UIModel {
         ui.setMessage("Máme tu " + records.length + " události.");
     }
 
+    @ModelOperation
     @OnPropertyChange("records")
-    static void onRecordsChangeUpdateWho(UI ui) {
+    void onRecordsChangeUpdateWho(UI ui) {
         final Avatar nextOnStart = ui.getNextOnStart();
         if (ui.getRecords().isEmpty() || nextOnStart == null || nextOnStart.getContact() == null) {
             return;
@@ -124,16 +128,33 @@ final class UIModel {
                 break;
             }
             if (who != null && who.getContact() == null) {
-                final int id = nextOnStart.getContact().getId();
+                final Contact started = nextOnStart.getContact();
+                final int id = started.getId();
                 if (id > 0) {
                     ev.withWho(id);
                     ui.updateWhoRef(ui.getUrl(), "" + ev.getWho(), "" + ev.getId());
                 }
                 who.withContact(nextOnStart.getContact());
-                nextOnStart.setContact(null);
+                updateNextOnStart(started, nextOnStart);
                 break;
             }
         }
+    }
+
+    private void updateNextOnStart(Contact justStarted, Avatar nextOnStart) {
+        nextOnStart.setContact(null);
+        Iterator<Contact> it = asStarted.iterator();
+        while (it.hasNext()) {
+            Contact c = it.next();
+            if (c == justStarted) {
+                it.remove();
+                if (it.hasNext()) {
+                    nextOnStart.setContact(it.next());
+                }
+                break;
+            }
+        }
+        asStarted.add(justStarted);
     }
 
     @OnReceive(url = "{url}/add?type={type}&ref={ref}", onError = "cannotConnect")
