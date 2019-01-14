@@ -225,6 +225,11 @@ public class UIModelTest {
         assertSecondsHundreds(0);
     }
 
+    @Test
+    public void timeWithMinusThreeZone() {
+        assertSecondsHundreds(-3);
+    }
+
     private void assertSecondsHundreds(final int offset) {
         Current c = new Current();
         final long now = System.currentTimeMillis();

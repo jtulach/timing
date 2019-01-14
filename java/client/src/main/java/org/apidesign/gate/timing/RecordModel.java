@@ -30,8 +30,13 @@ final class RecordModel {
         if (!validActual(actual, start)) {
             return "--";
         }
-        long time = (actual - start.getWhen()) / 1000L;
-        String digits = Long.toString(time % 3600);
+        long time = (actual - start.getWhen());
+        final long hourMillis = 3600L * 1000L;
+        long rem = time % hourMillis;
+        if (rem < 0) {
+            rem += hourMillis;
+        }
+        String digits = Long.toString(rem / 1000L);
         if (digits.length() < 2) {
             digits = "0" + digits;
         }
@@ -65,7 +70,11 @@ final class RecordModel {
             return "--";
         }
         long time = actual - start.getWhen();
-        String digits = Long.toString(time % 1000 / 10);
+        long rem = time % 1000;
+        if (rem < 0) {
+            rem += 1000;
+        }
+        String digits = Long.toString(rem / 10);
         if (digits.length() < 2) {
             digits = "0" + digits;
         }
