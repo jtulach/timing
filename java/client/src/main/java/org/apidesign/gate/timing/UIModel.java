@@ -277,6 +277,8 @@ final class UIModel {
         } else {
             ui.addContact(ui.getUrl(), e, e);
         }
+
+        contactSelected(ui, e);
     }
 
     @Function static void addPhoneEdited(UI ui) {
