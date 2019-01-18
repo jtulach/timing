@@ -1,7 +1,9 @@
 package org.apidesign.gate.timing.server;
 
 import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.ClientHandlerException;
 import com.sun.jersey.api.client.GenericType;
+import com.sun.jersey.api.client.UniformInterfaceException;
 import com.sun.jersey.api.client.WebResource;
 import java.net.ServerSocket;
 import java.net.URI;
@@ -13,6 +15,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.apidesign.gate.timing.shared.Event;
+import org.apidesign.gate.timing.shared.Run;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.junit.After;
 import static org.junit.Assert.assertEquals;
@@ -23,6 +26,7 @@ import org.junit.Test;
 
 public class TimingResourceTest {
     private final GenericType<List<Event>> eventType = new GenericType<List<Event>>() {};
+    private final GenericType<List<Run>> runType = new GenericType<List<Run>>() {};
     private HttpServer server;
     private URI baseUri;
 
@@ -145,7 +149,7 @@ public class TimingResourceTest {
 
 
         WebResource update = client.resource(baseUri.resolve("add")).
-            queryParam("type", "CONNECT").
+            queryParam("type", "ASSIGN").
             queryParam("when", "" + (when + 400)).
             queryParam("ref", "" + addedEvent.getId()).
             queryParam("who", "77");
@@ -218,6 +222,167 @@ public class TimingResourceTest {
         Event ev500 = client.resource(baseUri.resolve("add")).queryParam("type", "START").queryParam("when", "" + now500).get(Event.class);
 
         assertEquals("+300ms event delivered", ev500, request300.get().get(0));
+    }
+
+    @Test
+    public void testWaitForNewRecords() throws Exception {
+        Client client = new Client();
+
+        WebResource resource = client.resource(baseUri);
+        List<Event> list = resource.get(eventType);
+        assertEquals("One element " + list, 1, list.size());
+        Event initialized = list.get(0);
+
+        final long now = initialized.getWhen();
+        Future<List<Run>> request0 = async(() -> {
+            return client.resource(baseUri).path("runs").queryParam("newerThan", "" + now).get(runType);
+        });
+
+        Future<List<Run>> request300 = async(() -> {
+            final long nowPlus300 = now + 300;
+            return client.resource(baseUri).path("runs").queryParam("newerThan", "" + nowPlus300).get(runType);
+        });
+
+        try {
+            List<Run> noNewer = request0.get(100, TimeUnit.MILLISECONDS);
+            fail("We shouldn't get an answer: " + noNewer);
+        } catch (TimeoutException timeoutException) {
+            // OK
+        }
+
+        try {
+            List<Run> noNewer = request300.get(100, TimeUnit.MILLISECONDS);
+            fail("We shouldn't get an answer: " + noNewer);
+        } catch (TimeoutException timeoutException) {
+            // OK
+        }
+
+        long now100 = now + 100;
+        WebResource add = client.resource(baseUri.resolve("add")).queryParam("type", "START").queryParam("when", "" + now100);
+        Event addedEvent = add.get(Event.class);
+        assertNotNull(addedEvent);
+        assertEquals(now100, addedEvent.getWhen());
+        assertEquals("START", addedEvent.getType());
+
+        List<Run> newEventAt100 = request0.get(1000, TimeUnit.MILLISECONDS);
+        assertNotNull(newEventAt100);
+        assertEquals(1, newEventAt100.size());
+        assertEquals("It is the added event", addedEvent, newEventAt100.get(0).getStart());
+
+        try {
+            List<Run> noNewer = request300.get(100, TimeUnit.MILLISECONDS);
+            fail("Still no answer for +300ms: " + noNewer);
+        } catch (TimeoutException timeoutException) {
+            // OK
+        }
+
+        long now500 = now + 500;
+        Event ev500 = client.resource(baseUri.resolve("add")).queryParam("type", "FINISH").queryParam("when", "" + now500).get(Event.class);
+
+        assertEquals("+300ms event delivered", ev500, request300.get().get(0).getFinish());
+
+        long now700 = now + 700;
+        WebResource snd = client.resource(baseUri.resolve("add")).queryParam("type", "START").queryParam("when", "" + now700);
+
+        Future<List<Run>> request700 = async(() -> {
+            final long nowPlus700 = now + 700;
+            return client.resource(baseUri).path("runs").queryParam("newerThan", "" + now700).get(runType);
+        });
+
+        try {
+            List<Run> noNewer = request700.get(100, TimeUnit.MILLISECONDS);
+            fail("Still no answer for +500ms: " + noNewer);
+        } catch (TimeoutException timeoutException) {
+            // OK
+        }
+
+        long now1000 = now + 1000;
+        Event evIgnore = client.resource(baseUri.resolve("add")).queryParam("type", "IGNORE").queryParam("when", "" + now1000).queryParam("ref", "" + ev500.getId()).get(Event.class);
+        
+        List<Run> runsAfterIgnoringEvent = client.resource(baseUri).path("runs").get(runType);
+        assertEquals("Two: " + runsAfterIgnoringEvent, 2, runsAfterIgnoringEvent.size());
+
+        List<Run> incrementalRuns = request700.get();
+        assertEquals("Two incremental: " + incrementalRuns, 2, incrementalRuns.size());
+    }
+    
+    
+    
+    @Test
+    public void testSequenceOfStartsAndFinish() throws Exception {
+        Client client = new Client();
+
+        long now = System.currentTimeMillis() - 3600 * 1000;
+        Event start1 = sendEvent(client, "START", now + 100);
+        Event start2 = sendEvent(client, "START", now + 200);
+        Event start3 = sendEvent(client, "START", now + 300);
+        Event start4 = sendEvent(client, "START", now + 400);
+
+        Event finish1 = sendEvent(client, "FINISH", now + 1000);
+        Event finish2 = sendEvent(client, "FINISH", now + 2000);
+        
+        List<Run> runs1 = client.resource(baseUri).path("runs").get(runType);
+        assertEquals("Four: " + runs1, 4, runs1.size());
+        
+        assertFinished(900, runs1.get(0));
+        assertFinished(1800, runs1.get(1));
+        
+        /*
+        
+        List<Run> newEventAt100 = request0.get(1000, TimeUnit.MILLISECONDS);
+        assertNotNull(newEventAt100);
+        assertEquals(1, newEventAt100.size());
+        assertEquals("It is the added event", addedEvent, newEventAt100.get(0).getStart());
+
+        try {
+            List<Run> noNewer = request300.get(100, TimeUnit.MILLISECONDS);
+            fail("Still no answer for +300ms: " + noNewer);
+        } catch (TimeoutException timeoutException) {
+            // OK
+        }
+
+        long now500 = now + 500;
+        Event ev500 = client.resource(baseUri.resolve("add")).queryParam("type", "FINISH").queryParam("when", "" + now500).get(Event.class);
+
+        assertEquals("+300ms event delivered", ev500, request300.get().get(0).getFinish());
+
+        long now700 = now + 700;
+        WebResource snd = client.resource(baseUri.resolve("add")).queryParam("type", "START").queryParam("when", "" + now700);
+
+        Future<List<Run>> request700 = async(() -> {
+            final long nowPlus700 = now + 700;
+            return client.resource(baseUri).path("runs").queryParam("newerThan", "" + now700).get(runType);
+        });
+
+        try {
+            List<Run> noNewer = request700.get(100, TimeUnit.MILLISECONDS);
+            fail("Still no answer for +500ms: " + noNewer);
+        } catch (TimeoutException timeoutException) {
+            // OK
+        }
+
+        long now1000 = now + 1000;
+        Event evIgnore = client.resource(baseUri.resolve("add")).queryParam("type", "IGNORE").queryParam("when", "" + now1000).queryParam("ref", "" + ev500.getId()).get(Event.class);
+        
+        List<Run> runsAfterIgnoringEvent = client.resource(baseUri).path("runs").get(runType);
+        assertEquals("Two: " + runs1, 2, runs1.size());
+
+        List<Run> incrementalRuns = request700.get();
+        assertEquals("Two incremental: " + incrementalRuns, 2, incrementalRuns.size());
+*/
+    }
+
+    private Event sendEvent(Client client, String type, final long at) {
+        return client.resource(baseUri.resolve("add")).queryParam("type", type).queryParam("when", "" + at).get(Event.class);
+    }
+    
+    private static void assertFinished(long time, Run run) {
+        assertNotNull("Started", run.getStart());
+        assertNotNull("Finished", run.getFinish());
+        
+        long took = run.getFinish().getWhen() - run.getStart().getWhen();
+        
+        assertEquals(time, took);
     }
 
     private ExecutorService EXEC;

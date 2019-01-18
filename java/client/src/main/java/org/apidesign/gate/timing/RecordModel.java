@@ -5,7 +5,6 @@ import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.NavigableSet;
 import java.util.TreeSet;
 import net.java.html.json.ComputedProperty;
 import net.java.html.json.Model;
@@ -259,26 +258,6 @@ final class RecordModel {
             }
             return null;
         }
-    }
-
-    static void resetFinish(Record data, final Event currentFinish, final List<Record> records) {
-        TreeSet<Event> events = new TreeSet<>(Events.TIMELINE);
-        for (Record r : records) {
-            if (r.getFinish() != null) {
-                events.add(r.getFinish());
-            }
-            if (r.getStart() == null && r.getFinish() == data.getFinish()) {
-                r.getWho().setContact(null);
-            }
-        }
-        data.setFinish(currentFinish);
-        NavigableSet<Event> onlyNewer = events.tailSet(data.getStart(), true);
-        for (Record r : records) {
-            if (r.getStart() == null && r.getFinish() == currentFinish) {
-                r.getWho().setContact(data.getWho().getContact());
-            }
-        }
-
     }
 
 }

@@ -4,8 +4,10 @@ package org.apidesign.gate.timing.server;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
 import java.util.TreeSet;
@@ -22,23 +24,26 @@ import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.MediaType;
 import org.apidesign.gate.timing.shared.Event;
 import org.apidesign.gate.timing.shared.Events;
+import org.apidesign.gate.timing.shared.Run;
+import org.apidesign.gate.timing.shared.Runs;
 
 @Path("/timing/") @Singleton
 public final class TimingResource {
+    private final Map<AsyncResponse,Request> awaiting = new HashMap<>();
     private final NavigableSet<Event> events = new TreeSet<>(Events.COMPARATOR);
-    private final Map<AsyncResponse,Long> awaiting = new HashMap<>();
+    private List<Run> runs = Collections.emptyList();
     private int counter;
     @Inject
     private Storage storage;
     @Inject
     private ContactsResource contacts;
-    
+
     public TimingResource() {
     }
 
     @PostConstruct
-    public void init() throws IOException {
-        this.storage.readInto("timing", Event.class, events);
+    public synchronized void init() throws IOException {
+        storage.readInto("timing", Event.class, events);
         for (Event e : events) {
             if (e.getId() > counter) {
                 counter = e.getId();
@@ -49,35 +54,73 @@ public final class TimingResource {
                 new Event().withId(++counter).withWhen(System.currentTimeMillis()).withType("INITIALIZED")
             );
         }
+        runs = Runs.compute(events);
     }
-    
+
     @GET @Produces(MediaType.APPLICATION_JSON)
-    public synchronized void allEvents(
+    public void allEvents(
         @QueryParam("newerThan") @DefaultValue("0") long newerThan,
         @Suspended AsyncResponse response
     ) {
-        Collection<Event> result;
-        if (newerThan <= 0) {
-            result = events;
-        } else {
-            result = new ArrayList<>();
-            Iterator<Event> it = events.iterator();
-            while (it.hasNext()) {
-                Event ev = it.next();
-                if (ev.getWhen() > newerThan) {
-                    result.add(ev);
-                } else {
-                    break;
+        allEvents(new Request(false, newerThan), response);
+    }
+
+    @GET @Produces(MediaType.APPLICATION_JSON)
+    @Path("runs")
+    public void allRuns(
+        @QueryParam("newerThan") @DefaultValue("0") long newerThan,
+        @Suspended AsyncResponse response
+    ) {
+        allEvents(new Request(true, newerThan), response);
+    }
+
+    private synchronized void allEvents(Request request, AsyncResponse response) {
+        long first = events.isEmpty() ? -1L : events.iterator().next().getWhen();
+        if (first <= request.newerThan) {
+            awaiting.put(response, request);
+            return;
+        }
+
+        abstract class Loop<T> {
+            abstract long when(T item);
+            abstract T[] array(int size);
+
+            final void produce(Collection<T> all) {
+                Collection<T> result = new ArrayList<>();
+                for (T item : all) {
+                    final long when = when(item);
+                    if (when > request.newerThan) {
+                        result.add(item);
+                    }
                 }
-            }
-            if (result.isEmpty()) {
-                awaiting.put(response, newerThan);
-                return;
+                T[] arr = array(result.size());
+                response.resume(result.toArray(arr));
             }
         }
-        response.resume(result.toArray(new Event[result.size()]));
+
+        if (request.computeRuns) {
+            new Loop<Run>() {
+                long when(Run r) {
+                    return r.getWhen();
+                }
+
+                Run[] array(int size) {
+                    return new Run[size];
+                }
+            }.produce(runs);
+        } else {
+            new Loop<Event>() {
+                long when(Event e) {
+                    return e.getWhen();
+                }
+
+                Event[] array(int size) {
+                    return new Event[size];
+                }
+            }.produce(events);
+        }
     }
-    
+
     @GET @Produces(MediaType.APPLICATION_JSON)
     @Path("add")
     public synchronized Event addEvent(
@@ -95,6 +138,7 @@ public final class TimingResource {
             withWho(who).
             withType(type);
         events.add(newEvent);
+        runs = Runs.compute(events);
         storage.scheduleStore("timings", Event.class, events);
         handleAwaiting(when);
         return newEvent;
@@ -102,22 +146,30 @@ public final class TimingResource {
 
     private void handleAwaiting(long newest) {
         assert Thread.holdsLock(this);
-        AGAIN: for (;;) {
-            for (Map.Entry<AsyncResponse, Long> entry : awaiting.entrySet()) {
-                AsyncResponse ar = entry.getKey();
-                Long since = entry.getValue();
-                if (since <= newest) {
-                    awaiting.remove(ar);
-                    allEvents(since, ar);
-                    continue AGAIN;
-                }
+        Iterator<Map.Entry<AsyncResponse, Request>> it;
+        for (it = awaiting.entrySet().iterator(); it.hasNext(); ) {
+            Map.Entry<AsyncResponse, Request> entry = it.next();
+            AsyncResponse ar = entry.getKey();
+            Request since = entry.getValue();
+            if (since.newerThan <= newest) {
+                it.remove();
+                allEvents(since, ar);
             }
-            return;
         }
     }
 
     @Path("contacts")
     public ContactsResource getContacts() {
         return contacts;
+    }
+
+    private static final class Request {
+        final boolean computeRuns;
+        final long newerThan;
+
+        Request(boolean runs, long newerThan) {
+            this.computeRuns = runs;
+            this.newerThan = newerThan;
+        }
     }
 }
