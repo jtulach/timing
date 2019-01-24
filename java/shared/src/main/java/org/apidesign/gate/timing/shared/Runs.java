@@ -18,6 +18,7 @@ import net.java.html.json.Property;
     @Property(name = "finish", type = Event.class),
     @Property(name = "ignore", type = boolean.class),
     @Property(name = "who", type = int.class),
+    @Property(name = "id", type = int.class),
 })
 public final class Runs {
     @ModelOperation
@@ -96,6 +97,17 @@ public final class Runs {
                 }
             }            
         }
-        return new ArrayList<>(new LinkedHashSet<>(run.values()));
+        LinkedList<Run> res = new LinkedList<>();
+        int cnt = 0;
+        Iterator<Run> runsIt = run.values().iterator();
+        while (runsIt.hasNext()) {
+            Run r = runsIt.next();
+            if (r.getId() != 0) {
+                continue;
+            }
+            r.setId(++cnt);
+            res.addFirst(r);
+        }
+        return res;
     }
 }

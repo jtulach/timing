@@ -20,6 +20,7 @@ import org.glassfish.grizzly.http.server.HttpServer;
 import org.junit.After;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 import org.junit.Before;
 import org.junit.Test;
@@ -282,7 +283,7 @@ public class TimingResourceTest {
         assertEquals("+300ms event delivered", ev500, request300.get().get(0).getFinish());
 
         long now700 = now + 700;
-        WebResource snd = client.resource(baseUri.resolve("add")).queryParam("type", "START").queryParam("when", "" + now700);
+        Event ev700 = client.resource(baseUri.resolve("add")).queryParam("type", "START").queryParam("when", "" + now700).get(Event.class);
 
         Future<List<Run>> request700 = async(() -> {
             final long nowPlus700 = now + 700;
@@ -296,14 +297,10 @@ public class TimingResourceTest {
             // OK
         }
 
-        long now1000 = now + 1000;
-        Event evIgnore = client.resource(baseUri.resolve("add")).queryParam("type", "IGNORE").queryParam("when", "" + now1000).queryParam("ref", "" + ev500.getId()).get(Event.class);
-        
-        List<Run> runsAfterIgnoringEvent = client.resource(baseUri).path("runs").get(runType);
-        assertEquals("Two: " + runsAfterIgnoringEvent, 2, runsAfterIgnoringEvent.size());
-
-        List<Run> incrementalRuns = request700.get();
-        assertEquals("Two incremental: " + incrementalRuns, 2, incrementalRuns.size());
+        List<Run> runsBeforeIgnoringEvent = client.resource(baseUri).path("runs").get(runType);
+        assertEquals("Two runs: " + runsBeforeIgnoringEvent, 2, runsBeforeIgnoringEvent.size());
+        assertFinished(400, runsBeforeIgnoringEvent.get(1));
+        assertFinished(-1, runsBeforeIgnoringEvent.get(0));
     }
     
     
@@ -324,8 +321,8 @@ public class TimingResourceTest {
         List<Run> runs1 = client.resource(baseUri).path("runs").get(runType);
         assertEquals("Four: " + runs1, 4, runs1.size());
         
-        assertFinished(900, runs1.get(0));
-        assertFinished(1800, runs1.get(1));
+        assertFinished(900, runs1.get(3));
+        assertFinished(1800, runs1.get(2));
         
         /*
         
@@ -378,6 +375,11 @@ public class TimingResourceTest {
     
     private static void assertFinished(long time, Run run) {
         assertNotNull("Started", run.getStart());
+        if (time == -1) {
+            assertNull("Not finished", run.getFinish());
+            return;
+        }
+        
         assertNotNull("Finished", run.getFinish());
         
         long took = run.getFinish().getWhen() - run.getStart().getWhen();

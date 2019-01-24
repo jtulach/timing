@@ -26,21 +26,31 @@ public class RunsTest {
 
         assertEquals("Four: " + runs1, 4, runs1.size());
 
-        assertFinished(900, runs1.get(0));
-        assertFinished(1800, runs1.get(1));
-        assertFinished(-1, runs1.get(2));
-        assertFinished(-1, runs1.get(3));
+        assertFinished(900, runs1.get(3));
+        assertFinished(1800, runs1.get(2));
+        assertFinished(-1, runs1.get(1));
+        assertFinished(-1, runs1.get(0));
 
+        assertEquals(1, runs1.get(3).getId());
+        assertEquals(2, runs1.get(2).getId());
+        assertEquals(3, runs1.get(1).getId());
+        assertEquals(4, runs1.get(0).getId());
+        
         Event ignore1 = sendEvent(events, "IGNORE", now + 9000, finish2.getId());
 
         List<Run> runs2 = Runs.compute(events);
 
         assertEquals("Four: " + runs2, 4, runs1.size());
 
-        assertFinished(900, runs2.get(0));
-        assertFinished(-1, runs2.get(1));
+        assertFinished(900, runs2.get(3));
         assertFinished(-1, runs2.get(2));
-        assertFinished(-1, runs2.get(3));
+        assertFinished(-1, runs2.get(1));
+        assertFinished(-1, runs2.get(0));
+        
+        assertEquals(1, runs2.get(3).getId());
+        assertEquals(2, runs2.get(2).getId());
+        assertEquals(3, runs2.get(1).getId());
+        assertEquals(4, runs2.get(0).getId());
     }
 
     @Test
