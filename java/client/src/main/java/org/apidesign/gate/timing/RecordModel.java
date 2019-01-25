@@ -1,10 +1,12 @@
 package org.apidesign.gate.timing;
 
 import java.util.Comparator;
+import java.util.List;
 import net.java.html.json.ComputedProperty;
 import net.java.html.json.Model;
 import net.java.html.json.ModelOperation;
 import net.java.html.json.Property;
+import org.apidesign.gate.timing.shared.Contact;
 import org.apidesign.gate.timing.shared.Event;
 import org.apidesign.gate.timing.shared.Run;
 
@@ -95,6 +97,18 @@ final class RecordModel {
     @ModelOperation
     static void empty(Record model) {
         model.getRun().empty();
+        model.getWho().withContact(null);
+    }
+
+    @ModelOperation
+    static void findWhoAvatar(Record model, List<Contact> contacts) {
+        int who = model.getRun().getWho();
+        for (Contact c : contacts) {
+            if (c.getId() == who) {
+                model.getWho().withContact(c);
+                return;
+            }
+        }
         model.getWho().withContact(null);
     }
 

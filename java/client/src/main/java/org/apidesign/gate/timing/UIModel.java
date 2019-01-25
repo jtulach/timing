@@ -113,6 +113,7 @@ final class UIModel {
         Record[] records = new Record[Math.min(10, res.size())];
         for (int i = 0; i < records.length; i++) {
             records[i] = new Record().withCurrent(ui.getCurrent()).withRun(res.get(i));
+            records[i].findWhoAvatar(ui.getContacts());
         }
         ui.withRecords(records);
         ui.setMessage("Máme tu " + records.length + " události.");

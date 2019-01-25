@@ -78,6 +78,8 @@ public class UIModelTest {
         loadEvents(model, new Event().withId(1).withType("START").withWhen(now));
 
         assertEquals("One record now", 1, model.getRecords().size());
+        assertEquals("Reference to Ondra", ondra.getId(), model.getRecords().get(0).getStart().getWho());
+        assertEquals("Reference to Ondra", ondra, model.getRecords().get(0).getWho().getContact());
     }
 
 
@@ -142,6 +144,8 @@ public class UIModelTest {
             assertEquals(eventStart, runRecord.getStart());
             assertEquals(eventFinish, runRecord.getFinish());
             assertEquals("13", runRecord.getSeconds());
+
+            assertEquals(anna, runRecord.getWho().getContact());
         }
 
 
@@ -159,6 +163,8 @@ public class UIModelTest {
             assertEquals(eventStart, runRecord.getStart());
             assertEquals(eventFinish, runRecord.getFinish());
             assertEquals("07", runRecord.getSeconds());
+
+            assertEquals(ondra, runRecord.getWho().getContact());
         }
 
     }
