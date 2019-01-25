@@ -1,9 +1,7 @@
 package org.apidesign.gate.timing.server;
 
 import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.ClientHandlerException;
 import com.sun.jersey.api.client.GenericType;
-import com.sun.jersey.api.client.UniformInterfaceException;
 import com.sun.jersey.api.client.WebResource;
 import java.net.ServerSocket;
 import java.net.URI;
@@ -36,10 +34,11 @@ public class TimingResourceTest {
 
     @Before
     public void setUpMethod() throws Exception {
-        ServerSocket socket = new ServerSocket(0);
-        int emptyPort = socket.getLocalPort();
-        socket.close();
-        
+        int emptyPort;
+        try (ServerSocket socket = new ServerSocket(0)) {
+            emptyPort = socket.getLocalPort();
+        }
+
         System.setProperty("user.dir", "");
 
         URI serverURI = new URI("http://0.0.0.0:" + emptyPort + "/");
@@ -301,10 +300,20 @@ public class TimingResourceTest {
         assertEquals("Two runs: " + runsBeforeIgnoringEvent, 2, runsBeforeIgnoringEvent.size());
         assertFinished(400, runsBeforeIgnoringEvent.get(1));
         assertFinished(-1, runsBeforeIgnoringEvent.get(0));
+
+        long now1000 = now + 1000;
+        Event evIgnore = client.resource(baseUri.resolve("add")).queryParam("type", "IGNORE").queryParam("when", "" + now1000).queryParam("ref", "" + ev500.getId()).get(Event.class);
+        assertNotNull(evIgnore);
+
+        List<Run> runsAfterIgnoringEvent = client.resource(baseUri).path("runs").get(runType);
+        assertEquals("Two: " + runsAfterIgnoringEvent, 2, runsAfterIgnoringEvent.size());
+
+        List<Run> incrementalRuns = request700.get();
+        assertEquals("Two incremental: " + incrementalRuns, 2, incrementalRuns.size());
     }
-    
-    
-    
+
+
+
     @Test
     public void testSequenceOfStartsAndFinish() throws Exception {
         Client client = new Client();
@@ -317,74 +326,55 @@ public class TimingResourceTest {
 
         Event finish1 = sendEvent(client, "FINISH", now + 1000);
         Event finish2 = sendEvent(client, "FINISH", now + 2000);
-        
+
         List<Run> runs1 = client.resource(baseUri).path("runs").get(runType);
         assertEquals("Four: " + runs1, 4, runs1.size());
-        
+
         assertFinished(900, runs1.get(3));
         assertFinished(1800, runs1.get(2));
-        
-        /*
-        
-        List<Run> newEventAt100 = request0.get(1000, TimeUnit.MILLISECONDS);
-        assertNotNull(newEventAt100);
-        assertEquals(1, newEventAt100.size());
-        assertEquals("It is the added event", addedEvent, newEventAt100.get(0).getStart());
 
-        try {
-            List<Run> noNewer = request300.get(100, TimeUnit.MILLISECONDS);
-            fail("Still no answer for +300ms: " + noNewer);
-        } catch (TimeoutException timeoutException) {
-            // OK
-        }
-
-        long now500 = now + 500;
-        Event ev500 = client.resource(baseUri.resolve("add")).queryParam("type", "FINISH").queryParam("when", "" + now500).get(Event.class);
-
-        assertEquals("+300ms event delivered", ev500, request300.get().get(0).getFinish());
-
-        long now700 = now + 700;
-        WebResource snd = client.resource(baseUri.resolve("add")).queryParam("type", "START").queryParam("when", "" + now700);
-
-        Future<List<Run>> request700 = async(() -> {
-            final long nowPlus700 = now + 700;
-            return client.resource(baseUri).path("runs").queryParam("newerThan", "" + now700).get(runType);
+        Future<List<Run>> request3000 = async(() -> {
+            return client.resource(baseUri).path("runs").queryParam("newerThan", "" + (now + 3000)).get(runType);
         });
 
         try {
-            List<Run> noNewer = request700.get(100, TimeUnit.MILLISECONDS);
-            fail("Still no answer for +500ms: " + noNewer);
+            List<Run> noNewer = request3000.get(100, TimeUnit.MILLISECONDS);
+            fail("Still no answer for +3s: " + noNewer);
         } catch (TimeoutException timeoutException) {
             // OK
         }
 
-        long now1000 = now + 1000;
-        Event evIgnore = client.resource(baseUri.resolve("add")).queryParam("type", "IGNORE").queryParam("when", "" + now1000).queryParam("ref", "" + ev500.getId()).get(Event.class);
-        
-        List<Run> runsAfterIgnoringEvent = client.resource(baseUri).path("runs").get(runType);
-        assertEquals("Two: " + runs1, 2, runs1.size());
+        Event ev5000 = client.resource(baseUri.resolve("add")).queryParam("type", "FINISH").queryParam("when", "" + (now + 5000)).get(Event.class);
+        assertNotNull(ev5000);
 
-        List<Run> incrementalRuns = request700.get();
-        assertEquals("Two incremental: " + incrementalRuns, 2, incrementalRuns.size());
-*/
+
+        List<Run> incrementalRuns = request3000.get();
+        assertEquals("Last two incrementally delivered: " + incrementalRuns, 2, incrementalRuns.size());
+
+        assertFinished(-1, incrementalRuns.get(0), 4);
+        assertFinished(4700, incrementalRuns.get(1), 3);
     }
 
     private Event sendEvent(Client client, String type, final long at) {
         return client.resource(baseUri.resolve("add")).queryParam("type", type).queryParam("when", "" + at).get(Event.class);
     }
-    
-    private static void assertFinished(long time, Run run) {
+
+    private static void assertFinished(long time, Run run, int... id) {
         assertNotNull("Started", run.getStart());
         if (time == -1) {
             assertNull("Not finished", run.getFinish());
             return;
         }
-        
+
         assertNotNull("Finished", run.getFinish());
-        
+
         long took = run.getFinish().getWhen() - run.getStart().getWhen();
-        
+
         assertEquals(time, took);
+
+        if (id.length > 0) {
+            assertEquals(id[0], run.getId());
+        }
     }
 
     private ExecutorService EXEC;

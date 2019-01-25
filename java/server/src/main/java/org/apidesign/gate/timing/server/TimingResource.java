@@ -54,7 +54,7 @@ public final class TimingResource {
                 new Event().withId(++counter).withWhen(System.currentTimeMillis()).withType("INITIALIZED")
             );
         }
-        runs = Runs.compute(events);
+        updateRunsAndReturnChanged();
     }
 
     @GET @Produces(MediaType.APPLICATION_JSON)
@@ -62,7 +62,7 @@ public final class TimingResource {
         @QueryParam("newerThan") @DefaultValue("0") long newerThan,
         @Suspended AsyncResponse response
     ) {
-        allEvents(new Request(false, newerThan), response);
+        allEvents(new Request(false, newerThan), response, null);
     }
 
     @GET @Produces(MediaType.APPLICATION_JSON)
@@ -71,10 +71,12 @@ public final class TimingResource {
         @QueryParam("newerThan") @DefaultValue("0") long newerThan,
         @Suspended AsyncResponse response
     ) {
-        allEvents(new Request(true, newerThan), response);
+        allEvents(new Request(true, newerThan), response, null);
     }
 
-    private synchronized void allEvents(Request request, AsyncResponse response) {
+    private synchronized void allEvents(
+        Request request, AsyncResponse response, List<Run> changedRuns
+    ) {
         long first = events.isEmpty() ? -1L : events.iterator().next().getWhen();
         if (first <= request.newerThan) {
             awaiting.put(response, request);
@@ -99,15 +101,18 @@ public final class TimingResource {
         }
 
         if (request.computeRuns) {
+            if (changedRuns == null) {
+                changedRuns = this.runs;
+            }
             new Loop<Run>() {
                 long when(Run r) {
-                    return r.getWhen();
+                    return request.newerThan + 1;
                 }
 
                 Run[] array(int size) {
                     return new Run[size];
                 }
-            }.produce(runs);
+            }.produce(changedRuns);
         } else {
             new Loop<Event>() {
                 long when(Event e) {
@@ -138,13 +143,34 @@ public final class TimingResource {
             withWho(who).
             withType(type);
         events.add(newEvent);
-        runs = Runs.compute(events);
         storage.scheduleStore("timings", Event.class, events);
-        handleAwaiting(when);
+        List<Run> changed = updateRunsAndReturnChanged();
+        handleAwaiting(when, changed);
         return newEvent;
     }
 
-    private void handleAwaiting(long newest) {
+    private List<Run> updateRunsAndReturnChanged() {
+        List<Run> newRuns = Runs.compute(events);
+        int at = newRuns.size() - 1;
+        synchronized (this) {
+            while (at >= 0) {
+                Run newR = newRuns.get(at);
+                int oldAt = at - newRuns.size() + this.runs.size();
+                if (oldAt < 0) {
+                    break;
+                }
+                Run oldR = this.runs.get(oldAt);
+                if (!newR.equals(oldR)) {
+                    break;
+                }
+                at--;
+            }
+            runs = newRuns;
+        }
+        return newRuns.subList(0, at + 1);
+    }
+
+    private void handleAwaiting(long newest, List<Run> changedRuns) {
         assert Thread.holdsLock(this);
         Iterator<Map.Entry<AsyncResponse, Request>> it;
         for (it = awaiting.entrySet().iterator(); it.hasNext(); ) {
@@ -153,7 +179,7 @@ public final class TimingResource {
             Request since = entry.getValue();
             if (since.newerThan <= newest) {
                 it.remove();
-                allEvents(since, ar);
+                allEvents(since, ar, changedRuns);
             }
         }
     }
