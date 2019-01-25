@@ -17,6 +17,8 @@ import net.java.html.json.OnPropertyChange;
 import net.java.html.json.OnReceive;
 import net.java.html.json.Property;
 import org.apidesign.gate.timing.shared.Events;
+import org.apidesign.gate.timing.shared.Run;
+import org.apidesign.gate.timing.shared.Runs;
 
 @Model(className = "UI", targetId="", builder="with", instance = true, properties = {
     @Property(name = "url", type = String.class),
@@ -84,11 +86,10 @@ final class UIModel {
     static void continueTimer(UI model, Record data) {
         Event f = data.getFinish();
         if (f != null) {
-            data.setIgnore(true);
-            data.setFinish(null);
+            data.getRun().setIgnore(true);
+            data.getRun().setFinish(null);
             model.sendEvent(model.getUrl(), "IGNORE", "" + f.getId());
         }
-//        data.stop(System.currentTimeMillis());
     }
 
     //
@@ -106,7 +107,13 @@ final class UIModel {
 
     @OnPropertyChange("events")
     static void onEventsChangeUpdateRecords(UI ui) {
-        Record[] records = RecordModel.compute(ui, ui.getEvents(), 10, ui.isOnlyValid());
+        TreeSet<Event> sorted = new TreeSet<>(Events.COMPARATOR);
+        sorted.addAll(ui.getEvents());
+        List<Run> res = Runs.compute(sorted);
+        Record[] records = new Record[Math.min(10, res.size())];
+        for (int i = 0; i < records.length; i++) {
+            records[i] = new Record().withCurrent(ui.getCurrent()).withRun(res.get(i));
+        }
         ui.withRecords(records);
         ui.setMessage("Máme tu " + records.length + " události.");
     }

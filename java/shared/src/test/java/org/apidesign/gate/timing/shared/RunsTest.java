@@ -35,18 +35,18 @@ public class RunsTest {
         assertEquals(2, runs1.get(2).getId());
         assertEquals(3, runs1.get(1).getId());
         assertEquals(4, runs1.get(0).getId());
-        
+
         Event ignore1 = sendEvent(events, "IGNORE", now + 9000, finish2.getId());
 
         List<Run> runs2 = Runs.compute(events);
 
-        assertEquals("Four: " + runs2, 4, runs1.size());
+        assertEquals("Four: " + runs2, 4, runs2.size());
 
         assertFinished(900, runs2.get(3));
         assertFinished(-1, runs2.get(2));
         assertFinished(-1, runs2.get(1));
         assertFinished(-1, runs2.get(0));
-        
+
         assertEquals(1, runs2.get(3).getId());
         assertEquals(2, runs2.get(2).getId());
         assertEquals(3, runs2.get(1).getId());
@@ -69,6 +69,22 @@ public class RunsTest {
         List<Run> runs2 = Runs.compute(events);
         assertEquals("Still One run", 1, runs2.size());
         assertEquals("Assigned to 77", 77, runs2.get(0).getWho());
+    }
+
+    @Test
+    public void ignoringAnEventOfStart() {
+        NavigableSet<Event> events = new TreeSet<>(Events.COMPARATOR);
+        events.add(new Event().withId(22).withType("START").withWhen(432));
+        List<Run> runs1 = Runs.compute(events);
+        assertEquals("One event", 1, runs1.size());
+
+        events.add(new Event().withId(23).withType("START").withWhen(433));
+        List<Run> runs2 = Runs.compute(events);
+        assertEquals("Two events", 2, runs2.size());
+
+        events.add(new Event().withId(24).withType("IGNORE").withWhen(455).withRef(22));
+        List<Run> runs3 = Runs.compute(events);
+        assertEquals("One event again", 1, runs3.size());
     }
 
     private static int cnt;

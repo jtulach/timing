@@ -2,18 +2,21 @@ package org.apidesign.gate.timing;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.NavigableSet;
 import java.util.Random;
+import java.util.TreeSet;
 import net.java.html.BrwsrCtx;
 import net.java.html.json.Models;
 import org.apidesign.gate.timing.shared.Contact;
 import net.java.html.junit.BrowserRunner;
 import org.apidesign.gate.timing.shared.Event;
+import org.apidesign.gate.timing.shared.Events;
+import org.apidesign.gate.timing.shared.Run;
+import org.apidesign.gate.timing.shared.Runs;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.fail;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -36,7 +39,7 @@ public class UIModelTest {
     }
 
     @Test
-    public void ignoringAnEvent() {
+    public void ignoringAnEventOfStart() {
         UI model = new UI();
         loadEvents(model, new Event().withId(22).withType("START").withWhen(432));
         assertEquals("One event", 1, model.getRecords().size());
@@ -75,8 +78,6 @@ public class UIModelTest {
         loadEvents(model, new Event().withId(1).withType("START").withWhen(now));
 
         assertEquals("One record now", 1, model.getRecords().size());
-        assertEquals("Reference to Ondra", ondra.getId(), model.getRecords().get(0).getStart().getWho());
-        assertEquals("Reference to Ondra", ondra, model.getRecords().get(0).getWho().getContact());
     }
 
 
@@ -102,20 +103,15 @@ public class UIModelTest {
         final Event eventFinish = new Event().withId(2).withType("FINISH").withWhen(now + 13000);
         loadEvents(model, eventFinish);
 
-        assertEquals("Two records exist", 2, model.getRecords().size());
-        Record finishRecord = model.getRecords().get(0);
-        assertEquals("FINISH", finishRecord.getFinish().getType());
-        assertNull("No start", finishRecord.getStart());
-
-        Record runRecord = model.getRecords().get(1);
+        assertEquals("Two events connected to one run", 1, model.getRecords().size());
+        Record runRecord = model.getRecords().get(0);
 
         assertEquals("FINISH", runRecord.getFinish().getType());
         assertEquals("START", runRecord.getStart().getType());
 
         assertEquals(runRecord.getStart(), eventStart);
         assertEquals(runRecord.getFinish(), eventFinish);
-        assertEquals(13000, runRecord.getLengthMillis());
-        assertEquals("13:00", runRecord.getLength());
+        assertEquals("13", runRecord.getSeconds());
     }
 
     @Test
@@ -140,19 +136,12 @@ public class UIModelTest {
             final Event eventFinish = new Event().withId(2).withType("FINISH").withWhen(now + 13000).withRef(1);
             loadEvents(model, eventStart, eventFinish);
 
-            assertEquals("Two records visible", 2, model.getRecords().size());
-            Record finishRecord = model.getRecords().get(0);
-            Record runRecord = model.getRecords().get(1);
-
-            assertNull("No start", finishRecord.getStart());
-            assertEquals("FINISH", finishRecord.getFinish().getType());
+            assertEquals("Events connected to one run", 1, model.getRecords().size());
+            Record runRecord = model.getRecords().get(0);
 
             assertEquals(eventStart, runRecord.getStart());
             assertEquals(eventFinish, runRecord.getFinish());
-            assertEquals(13000, runRecord.getLengthMillis());
-            assertEquals("13:00", runRecord.getLength());
-
-            assertEquals(anna, runRecord.getWho().getContact());
+            assertEquals("13", runRecord.getSeconds());
         }
 
 
@@ -161,18 +150,15 @@ public class UIModelTest {
             final Event eventStart = new Event().withId(3).withType("START").withWhen(now + 20000).withWho(2).withRef(4);
             final Event eventFinish = new Event().withId(4).withType("FINISH").withWhen(now + 27000).withRef(3);
             loadEvents(model, eventStart, eventFinish);
-            assertEquals("Four records visible", 4, model.getRecords().size());
-            Record runRecord = model.getRecords().get(1);
+            assertEquals("Second run record", 2, model.getRecords().size());
+            Record runRecord = model.getRecords().get(0);
 
             assertEquals("START", runRecord.getStart().getType());
             assertEquals("FINISH", runRecord.getFinish().getType());
 
             assertEquals(eventStart, runRecord.getStart());
             assertEquals(eventFinish, runRecord.getFinish());
-            assertEquals(7000, runRecord.getLengthMillis());
-            assertEquals("07:00", runRecord.getLength());
-
-            assertEquals(ondra, runRecord.getWho().getContact());
+            assertEquals("07", runRecord.getSeconds());
         }
 
     }
@@ -190,16 +176,16 @@ public class UIModelTest {
         final Event eventFinish = new Event().withId(6).withType("FINISH").withWhen(now + 39000);
         loadEvents(model, eventStart1, eventStart2, eventStart3, eventFinish);
 
-        assertEquals("Three starts and three finish records", 4, model.getRecords().size());
-        final Record startRecord = model.getRecords().get(3);
+        assertEquals("Three starts and three finish records", 3, model.getRecords().size());
+        final Record startRecord = model.getRecords().get(2);
 
         assertEquals("Start event", eventStart1, startRecord.getStart());
         assertEquals("1st finish used", eventFinish, startRecord.getFinish());
 
-        assertEquals("The last finish chooses earliest start", "19:00", startRecord.getLength());
+        assertEquals("The last finish chooses earliest start", "19", startRecord.getSeconds());
 
-        assertNull("Second start hasn't finished yet", model.getRecords().get(2).getFinish());
-        assertNull("3rd start hasn't finished yet", model.getRecords().get(1).getFinish());
+        assertNull("Second start hasn't finished yet", model.getRecords().get(1).getFinish());
+        assertNull("3rd start hasn't finished yet", model.getRecords().get(0).getFinish());
     }
 
     @Test
@@ -213,7 +199,7 @@ public class UIModelTest {
         final Event eventStart = new Event().withId(4).withType("START").withWhen(now + 27000);
         loadEvents(model, eventFinish, eventStart);
 
-        assertEquals("Two records", 2, model.getRecords().size());
+        assertEquals("Finish record is ignored", 1, model.getRecords().size());
         final Record startRecord = model.getRecords().get(0);
 
         assertEquals("Start event", eventStart, startRecord.getStart());
@@ -271,13 +257,13 @@ public class UIModelTest {
 "]").getBytes("UTF-8")
         );
 
-        List<Event> arr = new ArrayList<>();
+        NavigableSet<Event> events = new TreeSet<>(Events.COMPARATOR);
         final BrwsrCtx ctx = BrwsrCtx.findDefault(ui.getClass());
-        Models.parse(ctx, Event.class, is, arr);
+        Models.parse(ctx, Event.class, is, events);
 
-        assertEquals("Seven elements: " + arr, 7, arr.size());
+        assertEquals("Seven elements: " + events, 7, events.size());
 
-        List<Record> res = Arrays.asList(RecordModel.compute(ui, arr, 10, true));
+        List<Run> res = Runs.compute(events);
         assertEquals("Two starts left: " + res, 2, res.size());
     }
 

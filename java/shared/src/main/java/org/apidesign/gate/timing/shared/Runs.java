@@ -7,6 +7,7 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Map;
 import java.util.NavigableSet;
 import net.java.html.json.ComputedProperty;
 import net.java.html.json.Model;
@@ -38,10 +39,7 @@ public final class Runs {
         return at;
     }
 
-    public static List<Run> compute(NavigableSet<Event> arr) {
-        return compute(arr, false);
-    }
-    static List<Run> compute(NavigableSet<Event> set, boolean onlyValid) {
+    public static List<Run> compute(NavigableSet<Event> set) {
         LinkedHashMap<Integer, Run> run = new LinkedHashMap<>();
         LinkedList<Run> running = new LinkedList<>();
         
@@ -71,19 +69,29 @@ public final class Runs {
                 case "IGNORE": {
                     Run r = run.get(ev.getRef());
                     if (r != null) {
-                        r.setFinish(null);
-                        ListIterator<Run> search = running.listIterator();
-                        while (search.hasNext()) {
-                            Run inThere = search.next();
-                            if (inThere.getWhen() > r.getWhen()) {
-                                search.previous();
-                                search.add(r);
-                                r = null;
-                                break;
+                        if (r.getFinish() != null && ev.getRef() == r.getFinish().getId()) {
+                            r.setFinish(null);
+                            ListIterator<Run> search = running.listIterator();
+                            while (search.hasNext()) {
+                                Run inThere = search.next();
+                                if (inThere.getWhen() > r.getWhen()) {
+                                    search.previous();
+                                    search.add(r);
+                                    r = null;
+                                    break;
+                                }
                             }
-                        }
-                        if (r != null) {
-                            running.add(r);
+                            if (r != null) {
+                                running.add(r);
+                            }
+                        } else {
+                            running.remove(r);
+                            Iterator<Map.Entry<Integer, Run>> removeIt = run.entrySet().iterator();
+                            while (removeIt.hasNext()) {
+                                if (removeIt.next().getValue() == r) {
+                                    removeIt.remove();
+                                }
+                            }
                         }
                     }
                     break;
