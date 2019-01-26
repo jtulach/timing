@@ -1,7 +1,9 @@
 package org.apidesign.gate.timing.server;
 
 import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.ClientHandlerException;
 import com.sun.jersey.api.client.GenericType;
+import com.sun.jersey.api.client.UniformInterfaceException;
 import com.sun.jersey.api.client.WebResource;
 import java.net.ServerSocket;
 import java.net.URI;
@@ -14,6 +16,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.apidesign.gate.timing.shared.Event;
 import org.apidesign.gate.timing.shared.Run;
+import org.apidesign.gate.timing.shared.RunInfo;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.junit.After;
 import static org.junit.Assert.assertEquals;
@@ -235,12 +238,11 @@ public class TimingResourceTest {
 
         final long now = initialized.getWhen();
         Future<List<Run>> request0 = async(() -> {
-            return client.resource(baseUri).path("runs").queryParam("newerThan", "" + now).get(runType);
+            return loadRuns(client, now);
         });
 
         Future<List<Run>> request300 = async(() -> {
-            final long nowPlus300 = now + 300;
-            return client.resource(baseUri).path("runs").queryParam("newerThan", "" + nowPlus300).get(runType);
+            return loadRuns(client, now + 300);
         });
 
         try {
@@ -285,8 +287,7 @@ public class TimingResourceTest {
         Event ev700 = client.resource(baseUri.resolve("add")).queryParam("type", "START").queryParam("when", "" + now700).get(Event.class);
 
         Future<List<Run>> request700 = async(() -> {
-            final long nowPlus700 = now + 700;
-            return client.resource(baseUri).path("runs").queryParam("newerThan", "" + now700).get(runType);
+            return loadRuns(client, now + 700);
         });
 
         try {
@@ -296,7 +297,7 @@ public class TimingResourceTest {
             // OK
         }
 
-        List<Run> runsBeforeIgnoringEvent = client.resource(baseUri).path("runs").get(runType);
+        List<Run> runsBeforeIgnoringEvent = loadRuns(client, 0);
         assertEquals("Two runs: " + runsBeforeIgnoringEvent, 2, runsBeforeIgnoringEvent.size());
         assertFinished(400, runsBeforeIgnoringEvent.get(1));
         assertFinished(-1, runsBeforeIgnoringEvent.get(0));
@@ -305,7 +306,7 @@ public class TimingResourceTest {
         Event evIgnore = client.resource(baseUri.resolve("add")).queryParam("type", "IGNORE").queryParam("when", "" + now1000).queryParam("ref", "" + ev500.getId()).get(Event.class);
         assertNotNull(evIgnore);
 
-        List<Run> runsAfterIgnoringEvent = client.resource(baseUri).path("runs").get(runType);
+        List<Run> runsAfterIgnoringEvent = loadRuns(client, 0);
         assertEquals("Two: " + runsAfterIgnoringEvent, 2, runsAfterIgnoringEvent.size());
 
         List<Run> incrementalRuns = request700.get();
@@ -327,14 +328,14 @@ public class TimingResourceTest {
         Event finish1 = sendEvent(client, "FINISH", now + 1000);
         Event finish2 = sendEvent(client, "FINISH", now + 2000);
 
-        List<Run> runs1 = client.resource(baseUri).path("runs").get(runType);
+        List<Run> runs1 = loadRuns(client, 0);
         assertEquals("Four: " + runs1, 4, runs1.size());
 
         assertFinished(900, runs1.get(3));
         assertFinished(1800, runs1.get(2));
 
         Future<List<Run>> request3000 = async(() -> {
-            return client.resource(baseUri).path("runs").queryParam("newerThan", "" + (now + 3000)).get(runType);
+            return loadRuns(client, now + 3000);
         });
 
         try {
@@ -353,6 +354,14 @@ public class TimingResourceTest {
 
         assertFinished(-1, incrementalRuns.get(0), 4);
         assertFinished(4700, incrementalRuns.get(1), 3);
+    }
+
+    private List<Run> loadRuns(Client client, long newerThan) throws ClientHandlerException, UniformInterfaceException {
+        WebResource resource = client.resource(baseUri).path("runs");
+        if (newerThan > 0) {
+            resource = resource.queryParam("newerThan", "" + newerThan);
+        }
+        return resource.get(RunInfo.class).getRuns();
     }
 
     private Event sendEvent(Client client, String type, final long at) {

@@ -15,6 +15,7 @@ import net.java.html.json.OnPropertyChange;
 import net.java.html.json.OnReceive;
 import net.java.html.json.Property;
 import org.apidesign.gate.timing.shared.Run;
+import org.apidesign.gate.timing.shared.RunInfo;
 
 @Model(className = "UI", targetId="", builder="with", instance = true, properties = {
     @Property(name = "url", type = String.class),
@@ -90,11 +91,11 @@ final class UIModel {
     //
 
     @OnReceive(url = "{url}/runs", onError = "cannotConnect")
-    static void loadRuns(UI ui, List<Run> arr, String previousURL) {
+    static void loadRuns(UI ui, RunInfo runs, String previousURL) {
         List<Record> oldRecords = ui.getRecords();
         List<Record> newRecords = Models.asList();
         int currentId = Integer.MAX_VALUE;
-        for (Run run : arr) {
+        for (Run run : runs.getRuns()) {
             Record record = new Record().withCurrent(ui.getCurrent()).withRun(run);
             record.findWhoAvatar(ui.getContacts());
             newRecords.add(record);
@@ -108,7 +109,7 @@ final class UIModel {
         final Record[] result = newRecords.toArray(new Record[newRecords.size()]);
         ui.withRecords(result);
         ui.setMessage("Máme tu " + result.length + " jízd.");
-        ui.checkPendingRuns(previousURL);
+        ui.checkPendingRuns(runs.getTimestamp(), previousURL);
     }
 
     @ModelOperation
@@ -212,15 +213,9 @@ final class UIModel {
     //
 
     @ModelOperation
-    static void checkPendingRuns(UI model, String previousURL) {
+    static void checkPendingRuns(UI model, long timestamp, String previousURL) {
         if (Objects.equals(model.getUrl(), previousURL)) {
-            long newest;
-            if (model.getRecords().isEmpty()) {
-                newest = 0;
-            } else {
-                newest = model.getRecords().get(0).getRun().getWhen();
-            }
-            model.loadPendingRuns(model.getUrl(), String.valueOf(newest), previousURL);
+            model.loadPendingRuns(previousURL, String.valueOf(timestamp), previousURL);
         } else {
             if (previousURL != null) {
                 cannotLoadPending(model, new Exception());
@@ -229,7 +224,7 @@ final class UIModel {
     }
 
     @OnReceive(url = "{url}/runs?newerThan={since}", onError = "cannotLoadPending")
-    static void loadPendingRuns(UI model, List<Run> runs, String previousUrl) {
+    static void loadPendingRuns(UI model, RunInfo runs, String previousUrl) {
         loadRuns(model, runs, previousUrl);
     }
 

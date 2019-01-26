@@ -25,6 +25,7 @@ import javax.ws.rs.core.MediaType;
 import org.apidesign.gate.timing.shared.Event;
 import org.apidesign.gate.timing.shared.Events;
 import org.apidesign.gate.timing.shared.Run;
+import org.apidesign.gate.timing.shared.RunInfo;
 import org.apidesign.gate.timing.shared.Runs;
 
 @Path("/timing/") @Singleton
@@ -86,6 +87,7 @@ public final class TimingResource {
         abstract class Loop<T> {
             abstract long when(T item);
             abstract T[] array(int size);
+            abstract Object wrap(T[] arr);
 
             final void produce(Collection<T> all) {
                 Collection<T> result = new ArrayList<>();
@@ -96,7 +98,8 @@ public final class TimingResource {
                     }
                 }
                 T[] arr = array(result.size());
-                response.resume(result.toArray(arr));
+                result.toArray(arr);
+                response.resume(wrap(arr));
             }
         }
 
@@ -106,11 +109,16 @@ public final class TimingResource {
             }
             new Loop<Run>() {
                 long when(Run r) {
-                    return request.newerThan + 1;
+                    return Long.MAX_VALUE;
                 }
 
                 Run[] array(int size) {
                     return new Run[size];
+                }
+
+                @Override
+                Object wrap(Run[] arr) {
+                    return new RunInfo().withRuns(arr).withTimestamp(first);
                 }
             }.produce(changedRuns);
         } else {
@@ -121,6 +129,11 @@ public final class TimingResource {
 
                 Event[] array(int size) {
                     return new Event[size];
+                }
+
+                @Override
+                Object wrap(Event[] arr) {
+                    return arr;
                 }
             }.produce(events);
         }

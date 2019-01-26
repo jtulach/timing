@@ -1,9 +1,7 @@
 package org.apidesign.gate.timing.shared;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
@@ -14,29 +12,36 @@ import net.java.html.json.Model;
 import net.java.html.json.ModelOperation;
 import net.java.html.json.Property;
 
-@Model(className = "Run", builder = "with", properties = {
-    @Property(name = "start", type = Event.class),
-    @Property(name = "finish", type = Event.class),
-    @Property(name = "ignore", type = boolean.class),
-    @Property(name = "who", type = int.class),
-    @Property(name = "id", type = int.class),
+@Model(className = "RunInfo", builder = "with", properties = {
+    @Property(name = "timestamp", type = long.class),
+    @Property(name = "runs", type = Run.class, array = true),
 })
 public final class Runs {
-    @ModelOperation
-    static void empty(Run model) {
-        model.withStart(null).withFinish(null).withIgnore(false);
-    }
     
-    @ComputedProperty
-    static long when(Event start, Event finish) {
-        long at = 0L;
-        if (start != null && start.getWhen() > at) {
-            at = start.getWhen();
+    @Model(className = "Run", builder = "with", properties = {
+        @Property(name = "start", type = Event.class),
+        @Property(name = "finish", type = Event.class),
+        @Property(name = "ignore", type = boolean.class),
+        @Property(name = "who", type = int.class),
+        @Property(name = "id", type = int.class),
+    })
+    static final class SingleRun {
+        @ModelOperation
+        static void empty(Run model) {
+            model.withStart(null).withFinish(null).withIgnore(false);
         }
-        if (finish != null && finish.getWhen() > at) {
-            at = finish.getWhen();
+
+        @ComputedProperty
+        static long when(Event start, Event finish) {
+            long at = 0L;
+            if (start != null && start.getWhen() > at) {
+                at = start.getWhen();
+            }
+            if (finish != null && finish.getWhen() > at) {
+                at = finish.getWhen();
+            }
+            return at;
         }
-        return at;
     }
 
     public static List<Run> compute(NavigableSet<Event> set) {
