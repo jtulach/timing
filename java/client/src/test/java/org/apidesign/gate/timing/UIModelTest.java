@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.NavigableSet;
 import java.util.Random;
@@ -28,7 +29,7 @@ import org.junit.runner.RunWith;
 public class UIModelTest {
     private final List<Event> testEvents = new ArrayList<>();
     private void loadEvents(UI model, Event... events) {
-        TreeSet<Event> all = new TreeSet<>(Events.TIMELINE);
+        List<Event> all = new ArrayList<>();
         all.addAll(testEvents);
         all.addAll(Arrays.asList(events));
         testEvents.clear();
@@ -37,7 +38,7 @@ public class UIModelTest {
         model.onRecordsChangeUpdateWho();
     }
 
-    private static void onEventsChangeUpdateRecords(UI ui, NavigableSet<Event> all) {
+    private static void onEventsChangeUpdateRecords(UI ui, Collection<Event> all) {
         TreeSet<Event> sorted = new TreeSet<>(Events.COMPARATOR);
         sorted.addAll(all);
         List<Run> res = Runs.compute(sorted);

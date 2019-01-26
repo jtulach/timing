@@ -18,7 +18,7 @@ import net.java.html.json.Property;
 public final class Events {
     /** Compares two {@link Event}s based on their increasing id
      */
-    public static final Comparator<Event> TIMELINE = (ev1, ev2) -> {
+    private static final Comparator<Event> TIMELINE = (ev1, ev2) -> {
         if (ev1 == ev2) {
             return 0;
         }
