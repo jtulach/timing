@@ -52,7 +52,7 @@ public final class Runs {
         while (it.hasNext()) {
             Event ev = it.next();
             switch (ev.getType()) {
-                case "START": {
+                case START: {
                     Run r = new Run();
                     r.empty();
                     r.withStart(ev);
@@ -61,7 +61,7 @@ public final class Runs {
                     running.add(r);
                     break;
                 }
-                case "FINISH": {
+                case FINISH: {
                     if (running.isEmpty()) {
                         continue;
                     }
@@ -71,7 +71,7 @@ public final class Runs {
                     assert prev == null;
                     break;
                 }
-                case "IGNORE": {
+                case IGNORE: {
                     Run r = run.get(ev.getRef());
                     if (r != null) {
                         if (r.getFinish() != null && ev.getRef() == r.getFinish().getId()) {
@@ -101,7 +101,7 @@ public final class Runs {
                     }
                     break;
                 }
-                case "ASSIGN": {
+                case ASSIGN: {
                     Run r = run.get(ev.getRef());
                     if (r != null) {
                         r.setWho(ev.getWho());

@@ -15,6 +15,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.apidesign.gate.timing.shared.Event;
+import org.apidesign.gate.timing.shared.Events;
 import org.apidesign.gate.timing.shared.Run;
 import org.apidesign.gate.timing.shared.RunInfo;
 import org.glassfish.grizzly.http.server.HttpServer;
@@ -60,7 +61,7 @@ public class TimingResourceTest {
         WebResource resource = client.resource(baseUri);
         List<Event> list = resource.get(new GenericType<List<Event>>() {});
         assertEquals("One element " + list, 1, list.size());
-        assertEquals("INITIALIZED", list.get(0).getType());
+        assertEquals(Events.INITIALIZED, list.get(0).getType());
     }
 
     @Test
@@ -71,7 +72,7 @@ public class TimingResourceTest {
         Event addedEvent = add.get(Event.class);
         assertNotNull(addedEvent);
         assertEquals(when, addedEvent.getWhen());
-        assertEquals("FINISH", addedEvent.getType());
+        assertEquals(Events.FINISH, addedEvent.getType());
 
         WebResource resource = client.resource(baseUri);
         List<Event> list = resource.get(new GenericType<List<Event>>() {});
@@ -88,14 +89,14 @@ public class TimingResourceTest {
             WebResource resource = client.resource(baseUri);
             List<Event> list = resource.get(new GenericType<List<Event>>() {});
             assertEquals("One element " + list, 1, list.size());
-            assertEquals("First one is INITIALIZED", "INITIALIZED", list.get(0).getType());
+            assertEquals("First one is INITIALIZED", Events.INITIALIZED, list.get(0).getType());
             when = list.get(0).getWhen() + 100;
         }
         WebResource add = client.resource(baseUri.resolve("add")).queryParam("type", "FINISH").queryParam("when", "" + when);
         Event addedEvent = add.get(Event.class);
         assertNotNull(addedEvent);
         assertEquals(when, addedEvent.getWhen());
-        assertEquals("FINISH", addedEvent.getType());
+        assertEquals(Events.FINISH, addedEvent.getType());
         assertEquals("Assigned to nobody", 0, addedEvent.getWho());
 
         {
@@ -133,14 +134,14 @@ public class TimingResourceTest {
             WebResource resource = client.resource(baseUri);
             List<Event> list = resource.get(new GenericType<List<Event>>() {});
             assertEquals("One element " + list, 1, list.size());
-            assertEquals("First one is INITIALIZED", "INITIALIZED", list.get(0).getType());
+            assertEquals("First one is INITIALIZED", Events.INITIALIZED, list.get(0).getType());
             when = list.get(0).getWhen() + 300;
         }
         WebResource add = client.resource(baseUri.resolve("add")).queryParam("type", "FINISH").queryParam("when", "" + when);
         Event addedEvent = add.get(Event.class);
         assertNotNull(addedEvent);
         assertEquals(when, addedEvent.getWhen());
-        assertEquals("FINISH", addedEvent.getType());
+        assertEquals(Events.FINISH, addedEvent.getType());
         assertEquals("Assigned to nobody", 0, addedEvent.getWho());
 
         {
@@ -207,7 +208,7 @@ public class TimingResourceTest {
         Event addedEvent = add.get(Event.class);
         assertNotNull(addedEvent);
         assertEquals(now100, addedEvent.getWhen());
-        assertEquals("FINISH", addedEvent.getType());
+        assertEquals(Events.FINISH, addedEvent.getType());
 
         List<Event> newEventAt100 = request0.get(1000, TimeUnit.MILLISECONDS);
         assertNotNull(newEventAt100);
@@ -264,7 +265,7 @@ public class TimingResourceTest {
         Event addedEvent = add.get(Event.class);
         assertNotNull(addedEvent);
         assertEquals(now100, addedEvent.getWhen());
-        assertEquals("START", addedEvent.getType());
+        assertEquals(Events.START, addedEvent.getType());
 
         List<Run> newEventAt100 = request0.get(1000, TimeUnit.MILLISECONDS);
         assertNotNull(newEventAt100);

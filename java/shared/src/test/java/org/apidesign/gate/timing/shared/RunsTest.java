@@ -74,21 +74,24 @@ public class RunsTest {
     @Test
     public void ignoringAnEventOfStart() {
         NavigableSet<Event> events = new TreeSet<>(Events.COMPARATOR);
-        events.add(new Event().withId(22).withType("START").withWhen(432));
+        events.add(new Event().withId(22).withType(Events.START).withWhen(432));
         List<Run> runs1 = Runs.compute(events);
         assertEquals("One event", 1, runs1.size());
 
-        events.add(new Event().withId(23).withType("START").withWhen(433));
+        events.add(new Event().withId(23).withType(Events.START).withWhen(433));
         List<Run> runs2 = Runs.compute(events);
         assertEquals("Two events", 2, runs2.size());
 
-        events.add(new Event().withId(24).withType("IGNORE").withWhen(455).withRef(22));
+        events.add(new Event().withId(24).withType(Events.IGNORE).withWhen(455).withRef(22));
         List<Run> runs3 = Runs.compute(events);
         assertEquals("One event again", 1, runs3.size());
     }
 
     private static int cnt;
     private static Event sendEvent(NavigableSet<Event> events, String type, long when, int... refWho) {
+        return sendEvent(events, Events.valueOf(type), when, refWho);
+    }
+    private static Event sendEvent(NavigableSet<Event> events, Events type, long when, int... refWho) {
         final Event ev = new Event().withId(cnt++).withType(type).withWhen(when);
         if (refWho.length > 0) {
             ev.withRef(refWho[0]);

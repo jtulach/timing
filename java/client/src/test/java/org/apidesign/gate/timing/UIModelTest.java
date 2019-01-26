@@ -61,18 +61,18 @@ public class UIModelTest {
     @Test
     public void ignoringAnEventOfStart() {
         UI model = new UI();
-        loadEvents(model, new Event().withId(22).withType("START").withWhen(432));
+        loadEvents(model, new Event().withId(22).withType(Events.START).withWhen(432));
         assertEquals("One event", 1, model.getRecords().size());
-        loadEvents(model, new Event().withId(23).withType("START").withWhen(433));
+        loadEvents(model, new Event().withId(23).withType(Events.START).withWhen(433));
         assertEquals("Two events", 2, model.getRecords().size());
-        loadEvents(model, new Event().withId(24).withType("IGNORE").withWhen(455).withRef(22));
+        loadEvents(model, new Event().withId(24).withType(Events.IGNORE).withWhen(455).withRef(22));
         assertEquals("One event again", 1, model.getRecords().size());
     }
 
     @Test
     public void oneEventPerId() {
         UI model = new UI();
-        final Event ev = new Event().withId(22).withType("START").withWhen(432);
+        final Event ev = new Event().withId(22).withType(Events.START).withWhen(432);
         loadEvents(model, ev);
         assertEquals("One event", 1, model.getRecords().size());
         loadEvents(model, ev);
@@ -95,7 +95,7 @@ public class UIModelTest {
 
         long now = System.currentTimeMillis();
         model.getNextOnStart().withContact(ondra);
-        loadEvents(model, new Event().withId(1).withType("START").withWhen(now));
+        loadEvents(model, new Event().withId(1).withType(Events.START).withWhen(now));
 
         assertEquals("One record now", 1, model.getRecords().size());
         assertEquals("Reference to Ondra", ondra.getId(), model.getRecords().get(0).getStart().getWho());
@@ -119,17 +119,17 @@ public class UIModelTest {
 
         long now = System.currentTimeMillis();
         model.setNextOnStart(new Avatar().withContact(ondra));
-        final Event eventStart = new Event().withId(1).withType("START").withWhen(now).withWho(3);
+        final Event eventStart = new Event().withId(1).withType(Events.START).withWhen(now).withWho(3);
         loadEvents(model, eventStart);
 
-        final Event eventFinish = new Event().withId(2).withType("FINISH").withWhen(now + 13000);
+        final Event eventFinish = new Event().withId(2).withType(Events.FINISH).withWhen(now + 13000);
         loadEvents(model, eventFinish);
 
         assertEquals("Two events connected to one run", 1, model.getRecords().size());
         Record runRecord = model.getRecords().get(0);
 
-        assertEquals("FINISH", runRecord.getFinish().getType());
-        assertEquals("START", runRecord.getStart().getType());
+        assertEquals(Events.FINISH, runRecord.getFinish().getType());
+        assertEquals(Events.START, runRecord.getStart().getType());
 
         assertEquals(runRecord.getStart(), eventStart);
         assertEquals(runRecord.getFinish(), eventFinish);
@@ -154,8 +154,8 @@ public class UIModelTest {
 
         long now = System.currentTimeMillis();
         {
-            final Event eventStart = new Event().withId(1).withType("START").withWhen(now).withWho(3).withRef(2);
-            final Event eventFinish = new Event().withId(2).withType("FINISH").withWhen(now + 13000).withRef(1);
+            final Event eventStart = new Event().withId(1).withType(Events.START).withWhen(now).withWho(3).withRef(2);
+            final Event eventFinish = new Event().withId(2).withType(Events.FINISH).withWhen(now + 13000).withRef(1);
             loadEvents(model, eventStart, eventFinish);
 
             assertEquals("Events connected to one run", 1, model.getRecords().size());
@@ -171,14 +171,14 @@ public class UIModelTest {
 
         model.getNextOnStart().withContact(ondra);
         {
-            final Event eventStart = new Event().withId(3).withType("START").withWhen(now + 20000).withWho(2).withRef(4);
-            final Event eventFinish = new Event().withId(4).withType("FINISH").withWhen(now + 27000).withRef(3);
+            final Event eventStart = new Event().withId(3).withType(Events.START).withWhen(now + 20000).withWho(2).withRef(4);
+            final Event eventFinish = new Event().withId(4).withType(Events.FINISH).withWhen(now + 27000).withRef(3);
             loadEvents(model, eventStart, eventFinish);
             assertEquals("Second run record", 2, model.getRecords().size());
             Record runRecord = model.getRecords().get(0);
 
-            assertEquals("START", runRecord.getStart().getType());
-            assertEquals("FINISH", runRecord.getFinish().getType());
+            assertEquals(Events.START, runRecord.getStart().getType());
+            assertEquals(Events.FINISH, runRecord.getFinish().getType());
 
             assertEquals(eventStart, runRecord.getStart());
             assertEquals(eventFinish, runRecord.getFinish());
@@ -196,10 +196,10 @@ public class UIModelTest {
         model.getContacts().add(ondra);
 
         long now = System.currentTimeMillis();
-        final Event eventStart1 = new Event().withId(3).withType("START").withWhen(now + 20000).withWho(1);
-        final Event eventStart2 = new Event().withId(4).withType("START").withWhen(now + 27000);
-        final Event eventStart3 = new Event().withId(5).withType("START").withWhen(now + 33000);
-        final Event eventFinish = new Event().withId(6).withType("FINISH").withWhen(now + 39000);
+        final Event eventStart1 = new Event().withId(3).withType(Events.START).withWhen(now + 20000).withWho(1);
+        final Event eventStart2 = new Event().withId(4).withType(Events.START).withWhen(now + 27000);
+        final Event eventStart3 = new Event().withId(5).withType(Events.START).withWhen(now + 33000);
+        final Event eventFinish = new Event().withId(6).withType(Events.FINISH).withWhen(now + 39000);
         loadEvents(model, eventStart1, eventStart2, eventStart3, eventFinish);
 
         assertEquals("Three starts and three finish records", 3, model.getRecords().size());
@@ -221,8 +221,8 @@ public class UIModelTest {
         model.getContacts().add(ondra);
 
         long now = System.currentTimeMillis();
-        final Event eventFinish = new Event().withId(3).withType("FINISH").withWhen(now + 20000).withWho(1);
-        final Event eventStart = new Event().withId(4).withType("START").withWhen(now + 27000);
+        final Event eventFinish = new Event().withId(3).withType(Events.FINISH).withWhen(now + 20000).withWho(1);
+        final Event eventStart = new Event().withId(4).withType(Events.START).withWhen(now + 27000);
         loadEvents(model, eventFinish, eventStart);
 
         assertEquals("Finish record is ignored", 1, model.getRecords().size());

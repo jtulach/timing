@@ -52,7 +52,7 @@ public final class TimingResource {
         }
         if (events.isEmpty()) {
             events.add(
-                new Event().withId(++counter).withWhen(System.currentTimeMillis()).withType("INITIALIZED")
+                new Event().withId(++counter).withWhen(System.currentTimeMillis()).withType(Events.INITIALIZED)
             );
         }
         updateRunsAndReturnChanged();
@@ -142,7 +142,7 @@ public final class TimingResource {
     @GET @Produces(MediaType.APPLICATION_JSON)
     @Path("add")
     public synchronized Event addEvent(
-        @QueryParam("type") String type,
+        @QueryParam("type") Events type,
         @QueryParam("when") long when,
         @QueryParam("who") int who,
         @QueryParam("ref") int ref
