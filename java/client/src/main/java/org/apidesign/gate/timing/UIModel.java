@@ -1,13 +1,11 @@
 package org.apidesign.gate.timing;
 
-import java.util.Collections;
 import java.util.Iterator;
 import org.apidesign.gate.timing.js.Dialogs;
 import org.apidesign.gate.timing.shared.Contact;
 import org.apidesign.gate.timing.shared.Event;
 import java.util.List;
 import java.util.Objects;
-import java.util.TreeSet;
 import net.java.html.json.ComputedProperty;
 import net.java.html.json.Function;
 import net.java.html.json.Model;
@@ -16,13 +14,10 @@ import net.java.html.json.Models;
 import net.java.html.json.OnPropertyChange;
 import net.java.html.json.OnReceive;
 import net.java.html.json.Property;
-import org.apidesign.gate.timing.shared.Events;
 import org.apidesign.gate.timing.shared.Run;
-import org.apidesign.gate.timing.shared.Runs;
 
 @Model(className = "UI", targetId="", builder="with", instance = true, properties = {
     @Property(name = "url", type = String.class),
-    @Property(name = "pending", type = String.class),
     @Property(name = "message", type = String.class),
     @Property(name = "alert", type = boolean.class),
 
@@ -36,9 +31,7 @@ import org.apidesign.gate.timing.shared.Runs;
     @Property(name = "nextOnStart", type = Avatar.class),
     @Property(name = "orderOnStart", type = Contact.class, array = true),
 
-    @Property(name = "events", type = Event.class, array = true),
     @Property(name = "records", type = Record.class, array = true),
-    @Property(name = "onlyValid", type = boolean.class),
 })
 final class UIModel {
     private final List<Contact> asStarted = Models.asList();
@@ -64,10 +57,10 @@ final class UIModel {
                         continue;
                     }
                     if (r.getFinish() != null) {
-                        ui.updateWhoRef(ui.getUrl(), "" + who, "" + r.getFinish().getId());
+                        ui.updateWhoRef(ui.getUrl(), "" + who, "" + r.getFinish().getId(), ui.getUrl());
                     }
                     if (r.getStart() != null) {
-                        ui.updateWhoRef(ui.getUrl(), "" + who, "" + r.getStart().getId());
+                        ui.updateWhoRef(ui.getUrl(), "" + who, "" + r.getStart().getId(), ui.getUrl());
                     }
                 }
             }
@@ -88,7 +81,7 @@ final class UIModel {
         if (f != null) {
             data.getRun().setIgnore(true);
             data.getRun().setFinish(null);
-            model.sendEvent(model.getUrl(), "IGNORE", "" + f.getId());
+            model.sendEvent(model.getUrl(), "IGNORE", "" + f.getId(), model.getUrl());
         }
     }
 
@@ -96,27 +89,26 @@ final class UIModel {
     // REST API callbacks
     //
 
-    @OnReceive(url = "{url}", onError = "cannotConnect")
-    static void loadEvents(UI ui, List<Event> arr) {
-        TreeSet<Event> all = new TreeSet<>(Events.TIMELINE);
-        all.addAll(ui.getEvents());
-        all.addAll(arr);
-        ui.withEvents(all.toArray(new Event[0]));
-        ui.checkPendingEvents(null);
-    }
-
-    @OnPropertyChange("events")
-    static void onEventsChangeUpdateRecords(UI ui) {
-        TreeSet<Event> sorted = new TreeSet<>(Events.COMPARATOR);
-        sorted.addAll(ui.getEvents());
-        List<Run> res = Runs.compute(sorted);
-        Record[] records = new Record[Math.min(10, res.size())];
-        for (int i = 0; i < records.length; i++) {
-            records[i] = new Record().withCurrent(ui.getCurrent()).withRun(res.get(i));
-            records[i].findWhoAvatar(ui.getContacts());
+    @OnReceive(url = "{url}/runs", onError = "cannotConnect")
+    static void loadRuns(UI ui, List<Run> arr, String previousURL) {
+        List<Record> oldRecords = ui.getRecords();
+        List<Record> newRecords = Models.asList();
+        int currentId = Integer.MAX_VALUE;
+        for (Run run : arr) {
+            Record record = new Record().withCurrent(ui.getCurrent()).withRun(run);
+            record.findWhoAvatar(ui.getContacts());
+            newRecords.add(record);
+            currentId = run.getId();
         }
-        ui.withRecords(records);
-        ui.setMessage("Máme tu " + records.length + " události.");
+        for (Record record : oldRecords) {
+            if (record.getRun().getId() < currentId) {
+                newRecords.add(record);
+            }
+        }
+        final Record[] result = newRecords.toArray(new Record[newRecords.size()]);
+        ui.withRecords(result);
+        ui.setMessage("Máme tu " + result.length + " jízd.");
+        ui.checkPendingRuns(previousURL);
     }
 
     @ModelOperation
@@ -140,7 +132,7 @@ final class UIModel {
                 final int id = started.getId();
                 if (id > 0) {
                     ev.withWho(id);
-                    ui.updateWhoRef(ui.getUrl(), "" + ev.getWho(), "" + ev.getId());
+                    ui.updateWhoRef(ui.getUrl(), "" + ev.getWho(), "" + ev.getId(), ui.getUrl());
                 }
                 who.withContact(nextOnStart.getContact());
                 updateNextOnStart(started, nextOnStart);
@@ -166,20 +158,20 @@ final class UIModel {
     }
 
     @OnReceive(url = "{url}/add?type={type}&ref={ref}", onError = "cannotConnect")
-    static void sendEvent(UI ui, Event reply) {
-        loadEvents(ui, Collections.nCopies(1, reply));
+    static void sendEvent(UI ui, Event reply, String previousURL) {
+        ui.loadRuns(ui.getUrl(), previousURL);
     }
 
     @OnReceive(url = "{url}/add?type=ASSIGN&who={who}&ref={ref}", onError = "cannotConnect")
-    static void updateWhoRef(UI ui, Event reply) {
-        loadEvents(ui, Collections.nCopies(1, reply));
+    static void updateWhoRef(UI ui, Event reply, String previousURL) {
+        ui.loadRuns(ui.getUrl(), previousURL);
     }
 
     @OnReceive(url = "{url}/contacts", onError = "cannotConnect")
-    static void loadContacts(UI ui, Contact[] arr) {
+    static void loadContacts(UI ui, Contact[] arr, String previousURL) {
         ui.withContacts(arr);
         ui.setMessage("Máme tu " + arr.length + " závodníků.");
-        ui.loadEvents(ui.getUrl());
+        ui.loadRuns(ui.getUrl(), previousURL);
     }
 
     @OnReceive(method = "POST", url = "{url}/contacts", data = Contact.class, onError = "cannotConnect")
@@ -220,12 +212,15 @@ final class UIModel {
     //
 
     @ModelOperation
-    static void checkPendingEvents(UI model, String previousURL) {
-        if (Objects.equals(model.getPending(), previousURL) && !model.getEvents().isEmpty()) {
-            List<Event> list = model.getEvents();
-            Event last = list.get(list.size() - 1);
-            model.setPending(model.getUrl());
-            model.loadPendingEvents(model.getUrl(), "" + last.getWhen(), model.getUrl());
+    static void checkPendingRuns(UI model, String previousURL) {
+        if (Objects.equals(model.getUrl(), previousURL)) {
+            long newest;
+            if (model.getRecords().isEmpty()) {
+                newest = 0;
+            } else {
+                newest = model.getRecords().get(0).getRun().getWhen();
+            }
+            model.loadPendingRuns(model.getUrl(), String.valueOf(newest), previousURL);
         } else {
             if (previousURL != null) {
                 cannotLoadPending(model, new Exception());
@@ -233,15 +228,13 @@ final class UIModel {
         }
     }
 
-    @OnReceive(url = "{url}?newerThan={since}", onError = "cannotLoadPending")
-    static void loadPendingEvents(UI model, List<Event> events, String previousUrl) {
-        loadEvents(model, events);
-        model.checkPendingEvents(previousUrl);
+    @OnReceive(url = "{url}/runs?newerThan={since}", onError = "cannotLoadPending")
+    static void loadPendingRuns(UI model, List<Run> runs, String previousUrl) {
+        loadRuns(model, runs, previousUrl);
     }
 
     static void cannotLoadPending(UI model, Exception ex) {
         model.setMessage("Poslouchání na změnách selhalo. " + ex.getMessage() + " - načti ručně.");
-        model.setPending(null);
     }
 
     //
@@ -253,7 +246,7 @@ final class UIModel {
         if (u.endsWith("/")) {
             data.setUrl(u.substring(0, u.length() - 1));
         }
-        data.loadContacts(data.getUrl());
+        data.loadContacts(data.getUrl(), data.getUrl());
     }
 
     @Function static void addContact(UI ui) {
@@ -273,10 +266,10 @@ final class UIModel {
 
     @Function static void ignoreEvent(UI ui, Record data) {
         if (data.getStart() != null) {
-            ui.sendEvent(ui.getUrl(), "IGNORE", "" + data.getStart().getId());
+            ui.sendEvent(ui.getUrl(), "IGNORE", "" + data.getStart().getId(), ui.getUrl());
         }
         if (data.getFinish()!= null) {
-            ui.sendEvent(ui.getUrl(), "IGNORE", "" + data.getFinish().getId());
+            ui.sendEvent(ui.getUrl(), "IGNORE", "" + data.getFinish().getId(), ui.getUrl());
         }
     }
 
@@ -335,7 +328,6 @@ final class UIModel {
         uiModel.setEdited(null);
         uiModel.setSelected(null);
         uiModel.setChoose(null);
-        uiModel.setOnlyValid(true);
         uiModel.applyBindings();
         uiModel.connect();
         uiModel.getCurrent().start();

@@ -2,6 +2,7 @@ package org.apidesign.gate.timing;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.NavigableSet;
@@ -25,10 +26,28 @@ import org.junit.runner.RunWith;
   */
 @RunWith(BrowserRunner.class)
 public class UIModelTest {
-    private static void loadEvents(UI model, Event... events) {
-        UIModel.loadEvents(model, Arrays.asList(events));
-        UIModel.onEventsChangeUpdateRecords(model);
+    private final List<Event> testEvents = new ArrayList<>();
+    private void loadEvents(UI model, Event... events) {
+        TreeSet<Event> all = new TreeSet<>(Events.TIMELINE);
+        all.addAll(testEvents);
+        all.addAll(Arrays.asList(events));
+        testEvents.clear();
+        testEvents.addAll(all);
+        onEventsChangeUpdateRecords(model, all);
         model.onRecordsChangeUpdateWho();
+    }
+
+    private static void onEventsChangeUpdateRecords(UI ui, NavigableSet<Event> all) {
+        TreeSet<Event> sorted = new TreeSet<>(Events.COMPARATOR);
+        sorted.addAll(all);
+        List<Run> res = Runs.compute(sorted);
+        Record[] records = new Record[Math.min(10, res.size())];
+        for (int i = 0; i < records.length; i++) {
+            records[i] = new Record().withCurrent(ui.getCurrent()).withRun(res.get(i));
+            records[i].findWhoAvatar(ui.getContacts());
+        }
+        ui.withRecords(records);
+        ui.setMessage("Máme tu " + records.length + " jízd.");
     }
 
     @Test public void addNewSetsEdited() {
