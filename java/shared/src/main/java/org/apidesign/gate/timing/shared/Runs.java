@@ -3,6 +3,7 @@ package org.apidesign.gate.timing.shared;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.NavigableSet;
@@ -17,7 +18,7 @@ import net.java.html.json.Property;
     @Property(name = "runs", type = Run.class, array = true),
 })
 public final class Runs {
-    
+
     @Model(className = "Run", builder = "with", properties = {
         @Property(name = "start", type = Event.class),
         @Property(name = "finish", type = Event.class),
@@ -44,6 +45,23 @@ public final class Runs {
         }
     }
 
+    private static int findFollower(List<Run> runs, int who) {
+        int id = -1;
+        boolean nextOne = false;
+        for (Run r : runs) {
+            if (nextOne) {
+                if (r.getWho() >= 0) {
+                    id = r.getWho();
+                }
+                nextOne = false;
+            }
+            if (r.getWho() == who) {
+                nextOne = true;
+            }
+        }
+        return id;
+    }
+
     public static Running compute(NavigableSet<Event> set) {
         LinkedHashMap<Integer, Run> run = new LinkedHashMap<>();
         LinkedList<Run> running = new LinkedList<>();
@@ -63,7 +81,7 @@ public final class Runs {
                     r.withStart(ev);
                     if (nextOnStart >= 0) {
                         r.setWho(nextOnStart);
-                        nextOnStart = -1;
+                        nextOnStart = findFollower(running, nextOnStart);
                     }
                     Run prev = run.put(ev.getId(), r);
                     assert prev == null;
@@ -120,7 +138,7 @@ public final class Runs {
                     }
                     break;
                 }
-            }            
+            }
         }
         LinkedList<Run> res = new LinkedList<>();
         int cnt = 0;

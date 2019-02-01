@@ -16,6 +16,7 @@ import net.java.html.junit.BrowserRunner;
 import org.apidesign.gate.timing.shared.Event;
 import org.apidesign.gate.timing.shared.Events;
 import org.apidesign.gate.timing.shared.Run;
+import org.apidesign.gate.timing.shared.Running;
 import org.apidesign.gate.timing.shared.Runs;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -35,19 +36,20 @@ public class UIModelTest {
         testEvents.clear();
         testEvents.addAll(all);
         onEventsChangeUpdateRecords(model, all);
-        model.onRecordsChangeUpdateWho();
     }
 
     private static void onEventsChangeUpdateRecords(UI ui, Collection<Event> all) {
         TreeSet<Event> sorted = new TreeSet<>(Events.COMPARATOR);
         sorted.addAll(all);
-        List<Run> res = Runs.compute(sorted).getRuns();
+        Running info = Runs.compute(sorted);
+        List<Run> res = info.getRuns();
         Record[] records = new Record[Math.min(10, res.size())];
         for (int i = 0; i < records.length; i++) {
             records[i] = new Record().withCurrent(ui.getCurrent()).withRun(res.get(i));
             records[i].findWhoAvatar(ui.getContacts());
         }
         ui.withRecords(records);
+        ui.selectNextOnStart(info.getStarting());
         ui.setMessage("Máme tu " + records.length + " jízd.");
     }
 
@@ -94,11 +96,10 @@ public class UIModelTest {
         assertEquals("No events so far", 0, model.getRecords().size());
 
         long now = System.currentTimeMillis();
-        model.getNextOnStart().withContact(ondra);
-        loadEvents(model, new Event().withId(1).withType(Events.START).withWhen(now));
+        final Event selectOndra = new Event().withType(Events.ASSIGN).withId(1).withRef(-1).withWhen(now).withWho(ondra.getId());
+        loadEvents(model, selectOndra, new Event().withId(2).withType(Events.START).withWhen(now + 1000));
 
         assertEquals("One record now", 1, model.getRecords().size());
-        assertEquals("Reference to Ondra", ondra.getId(), model.getRecords().get(0).getStart().getWho());
         assertEquals("Reference to Ondra", ondra, model.getRecords().get(0).getWho().getContact());
     }
 
@@ -150,13 +151,14 @@ public class UIModelTest {
 
         assertEquals("No events so far", 0, model.getRecords().size());
 
-        model.getNextOnStart().withContact(anna);
-
         long now = System.currentTimeMillis();
+        int idCounter = 1;
+
+        final Event selectAnna = new Event().withType(Events.ASSIGN).withId(idCounter++).withRef(-1).withWho(anna.getId()).withWhen(now - 1000);
         {
-            final Event eventStart = new Event().withId(1).withType(Events.START).withWhen(now).withWho(3).withRef(2);
-            final Event eventFinish = new Event().withId(2).withType(Events.FINISH).withWhen(now + 13000).withRef(1);
-            loadEvents(model, eventStart, eventFinish);
+            final Event eventStart = new Event().withId(idCounter++).withType(Events.START).withWhen(now).withWho(3).withRef(2);
+            final Event eventFinish = new Event().withId(idCounter++).withType(Events.FINISH).withWhen(now + 13000).withRef(1);
+            loadEvents(model, selectAnna, eventStart, eventFinish);
 
             assertEquals("Events connected to one run", 1, model.getRecords().size());
             Record runRecord = model.getRecords().get(0);
@@ -169,11 +171,11 @@ public class UIModelTest {
         }
 
 
-        model.getNextOnStart().withContact(ondra);
+        final Event selectOndra = new Event().withType(Events.ASSIGN).withId(idCounter++).withRef(-1).withWho(ondra.getId()).withWhen(now + 19000);
         {
-            final Event eventStart = new Event().withId(3).withType(Events.START).withWhen(now + 20000).withWho(2).withRef(4);
-            final Event eventFinish = new Event().withId(4).withType(Events.FINISH).withWhen(now + 27000).withRef(3);
-            loadEvents(model, eventStart, eventFinish);
+            final Event eventStart = new Event().withId(idCounter++).withType(Events.START).withWhen(now + 20000).withWho(2).withRef(4);
+            final Event eventFinish = new Event().withId(idCounter++).withType(Events.FINISH).withWhen(now + 27000).withRef(3);
+            loadEvents(model, selectOndra, eventStart, eventFinish);
             assertEquals("Second run record", 2, model.getRecords().size());
             Record runRecord = model.getRecords().get(0);
 

@@ -110,6 +110,48 @@ public class RunsTest {
         assertEquals("One event again", 1, runs3.size());
     }
 
+    @Test
+    public void nextOnStartTest() {
+        NavigableSet<Event> events = new TreeSet<>(Events.COMPARATOR);
+
+
+        long firstRound = System.currentTimeMillis();
+        for (int i = 0; i < 10; i++) {
+            int expectedWho = (i + 1) * 10;
+            long next = firstRound + i * 1000;
+            Event on1 = sendEvent(events, "ASSIGN", next + 50, -1, expectedWho);
+            final int actualWho = Runs.compute(events).getStarting();
+            assertEquals("Who starts next?", expectedWho, actualWho);
+
+            Event start1 = sendEvent(events, "START", next + 100);
+            assertEquals("Who knows who starts next", -1, Runs.compute(events).getStarting());
+        }
+
+        long secondRound = firstRound + 30 * 1000;
+        Event firstOneHasToBeSelected = sendEvent(events, "ASSIGN", secondRound + 50, -1, 10);
+        assertNotNull("#10 selected for start", firstOneHasToBeSelected);
+        for (int i = 0; i < 10; i++) {
+            int expectedWho = (i + 1) * 10;
+            long next = secondRound + i * 1000;
+            final int actualWho = Runs.compute(events).getStarting();
+            assertEquals("Who starts next?", expectedWho, actualWho);
+
+            Event start1 = sendEvent(events, "START", next + 100);
+        }
+        assertEquals("#10 is selected again", 10, Runs.compute(events).getStarting());
+
+        long afterRounds = secondRound + 30 * 1000;
+
+        Event selectFromMiddle = sendEvent(events, "ASSIGN", afterRounds + 50, -1, 50);
+        final int actualWho50 = Runs.compute(events).getStarting();
+        assertEquals("#50 explicitly selected", 50, Runs.compute(events).getStarting());
+
+        Event start1 = sendEvent(events, "START", afterRounds + 100);
+
+        final int actualWho60 = Runs.compute(events).getStarting();
+        assertEquals("#60 automatically selected as next", 60, Runs.compute(events).getStarting());
+    }
+
     private static int cnt;
     private static Event sendEvent(NavigableSet<Event> events, String type, long when, int... refWho) {
         return sendEvent(events, Events.valueOf(type), when, refWho);

@@ -30,13 +30,10 @@ import org.apidesign.gate.timing.shared.Running;
     @Property(name = "edited", type = Contact.class),
 
     @Property(name = "nextOnStart", type = Avatar.class),
-    @Property(name = "orderOnStart", type = Contact.class, array = true),
 
     @Property(name = "records", type = Record.class, array = true),
 })
 final class UIModel {
-    private final List<Contact> asStarted = Models.asList();
-
     @ComputedProperty
     static boolean showEvents(Contact edited, Avatar choose) {
         return choose == null && edited == null;
@@ -90,6 +87,20 @@ final class UIModel {
         }
     }
 
+    @ModelOperation
+    static void selectNextOnStart(UI ui, int id) {
+        if (id >= 0) {
+            for (Contact c : ui.getContacts()) {
+                if (c.getId() == id) {
+                    ui.getNextOnStart().setContact(c);
+                    break;
+                }
+            }
+        } else {
+            ui.getNextOnStart().setContact(null);
+        }
+    }
+
     //
     // REST API callbacks
     //
@@ -112,62 +123,9 @@ final class UIModel {
         }
         final Record[] result = newRecords.toArray(new Record[newRecords.size()]);
         ui.withRecords(result);
+        ui.selectNextOnStart(runs.getStarting());
         ui.setMessage("Máme tu " + result.length + " jízd.");
-        if (runs.getStarting() >= 0) {
-            for (Contact c : ui.getContacts()) {
-                if (c.getId() == runs.getStarting()) {
-                    ui.getNextOnStart().setContact(c);
-                    break;
-                }
-            }
-        }
         ui.checkPendingRuns(runs.getTimestamp(), previousURL);
-    }
-
-    @ModelOperation
-    @OnPropertyChange("records")
-    void onRecordsChangeUpdateWho(UI ui) {
-        final Avatar nextOnStart = ui.getNextOnStart();
-        if (ui.getRecords().isEmpty() || nextOnStart == null || nextOnStart.getContact() == null) {
-            return;
-        }
-        for (Record runRecord : ui.getRecords()) {
-            final Event ev = runRecord.getStart();
-            if (ev == null) {
-                continue;
-            }
-            final Avatar who = runRecord.getWho();
-            if (who != null && who.getContact() != null) {
-                break;
-            }
-            if (who != null && who.getContact() == null) {
-                final Contact started = nextOnStart.getContact();
-                final int id = started.getId();
-                if (id > 0) {
-                    ev.withWho(id);
-                    ui.updateWhoRef(ui.getUrl(), "" + ev.getWho(), "" + ev.getId(), ui.getUrl());
-                }
-                who.withContact(nextOnStart.getContact());
-                updateNextOnStart(started, nextOnStart);
-                break;
-            }
-        }
-    }
-
-    private void updateNextOnStart(Contact justStarted, Avatar nextOnStart) {
-        nextOnStart.setContact(null);
-        Iterator<Contact> it = asStarted.iterator();
-        while (it.hasNext()) {
-            Contact c = it.next();
-            if (c == justStarted) {
-                it.remove();
-                if (it.hasNext()) {
-                    nextOnStart.setContact(it.next());
-                }
-                break;
-            }
-        }
-        asStarted.add(justStarted);
     }
 
     @OnReceive(url = "{url}/add?type={type}&ref={ref}", onError = "cannotConnect")
