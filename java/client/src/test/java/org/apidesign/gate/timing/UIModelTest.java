@@ -41,7 +41,7 @@ public class UIModelTest {
     private static void onEventsChangeUpdateRecords(UI ui, Collection<Event> all) {
         TreeSet<Event> sorted = new TreeSet<>(Events.COMPARATOR);
         sorted.addAll(all);
-        List<Run> res = Runs.compute(sorted);
+        List<Run> res = Runs.compute(sorted).getRuns();
         Record[] records = new Record[Math.min(10, res.size())];
         for (int i = 0; i < records.length; i++) {
             records[i] = new Record().withCurrent(ui.getCurrent()).withRun(res.get(i));
@@ -289,7 +289,7 @@ public class UIModelTest {
 
         assertEquals("Seven elements: " + events, 7, events.size());
 
-        List<Run> res = Runs.compute(events);
+        List<Run> res = Runs.compute(events).getRuns();
         assertEquals("Two starts left: " + res, 2, res.size());
     }
 

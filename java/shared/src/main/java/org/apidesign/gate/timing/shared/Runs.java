@@ -3,7 +3,6 @@ package org.apidesign.gate.timing.shared;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.NavigableSet;
@@ -12,8 +11,9 @@ import net.java.html.json.Model;
 import net.java.html.json.ModelOperation;
 import net.java.html.json.Property;
 
-@Model(className = "RunInfo", builder = "with", properties = {
+@Model(className = "Running", builder = "with", properties = {
     @Property(name = "timestamp", type = long.class),
+    @Property(name = "starting", type = int.class),
     @Property(name = "runs", type = Run.class, array = true),
 })
 public final class Runs {
@@ -44,18 +44,27 @@ public final class Runs {
         }
     }
 
-    public static List<Run> compute(NavigableSet<Event> set) {
+    public static Running compute(NavigableSet<Event> set) {
         LinkedHashMap<Integer, Run> run = new LinkedHashMap<>();
         LinkedList<Run> running = new LinkedList<>();
-        
+
+        long newestEvent = 0;
+        int nextOnStart = -1;
         Iterator<Event> it = set.descendingIterator();
         while (it.hasNext()) {
             Event ev = it.next();
+            if (ev.getWhen() > newestEvent) {
+                newestEvent = ev.getWhen();
+            }
             switch (ev.getType()) {
                 case START: {
                     Run r = new Run();
                     r.empty();
                     r.withStart(ev);
+                    if (nextOnStart >= 0) {
+                        r.setWho(nextOnStart);
+                        nextOnStart = -1;
+                    }
                     Run prev = run.put(ev.getId(), r);
                     assert prev == null;
                     running.add(r);
@@ -102,6 +111,9 @@ public final class Runs {
                     break;
                 }
                 case ASSIGN: {
+                    if (ev.getRef() == -1) {
+                        nextOnStart = ev.getWho();
+                    }
                     Run r = run.get(ev.getRef());
                     if (r != null) {
                         r.setWho(ev.getWho());
@@ -121,6 +133,9 @@ public final class Runs {
             r.setId(++cnt);
             res.addFirst(r);
         }
-        return res;
+        return new Running().
+            withRuns(res.toArray(new Run[res.size()])).
+            withStarting(nextOnStart).
+            withTimestamp(newestEvent);
     }
 }

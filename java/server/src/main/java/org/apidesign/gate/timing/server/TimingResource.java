@@ -4,7 +4,6 @@ package org.apidesign.gate.timing.server;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -25,14 +24,14 @@ import javax.ws.rs.core.MediaType;
 import org.apidesign.gate.timing.shared.Event;
 import org.apidesign.gate.timing.shared.Events;
 import org.apidesign.gate.timing.shared.Run;
-import org.apidesign.gate.timing.shared.RunInfo;
+import org.apidesign.gate.timing.shared.Running;
 import org.apidesign.gate.timing.shared.Runs;
 
 @Path("/timing/") @Singleton
 public final class TimingResource {
     private final Map<AsyncResponse,Request> awaiting = new HashMap<>();
     private final NavigableSet<Event> events = new TreeSet<>(Events.COMPARATOR);
-    private List<Run> runs = Collections.emptyList();
+    private Running runs = new Running();
     private int counter;
     @Inject
     private Storage storage;
@@ -76,7 +75,7 @@ public final class TimingResource {
     }
 
     private synchronized void allEvents(
-        Request request, AsyncResponse response, List<Run> changedRuns
+        Request request, AsyncResponse response, Running changedRuns
     ) {
         long first = events.isEmpty() ? -1L : events.iterator().next().getWhen();
         if (first <= request.newerThan) {
@@ -107,6 +106,7 @@ public final class TimingResource {
             if (changedRuns == null) {
                 changedRuns = this.runs;
             }
+            Running filterRuns = changedRuns.clone();
             new Loop<Run>() {
                 long when(Run r) {
                     return Long.MAX_VALUE;
@@ -118,9 +118,9 @@ public final class TimingResource {
 
                 @Override
                 Object wrap(Run[] arr) {
-                    return new RunInfo().withRuns(arr).withTimestamp(first);
+                    return filterRuns.withRuns(arr);
                 }
-            }.produce(changedRuns);
+            }.produce(filterRuns.getRuns());
         } else {
             new Loop<Event>() {
                 long when(Event e) {
@@ -157,33 +157,38 @@ public final class TimingResource {
             withType(type);
         events.add(newEvent);
         storage.scheduleStore("timings", Event.class, events);
-        List<Run> changed = updateRunsAndReturnChanged();
+        Running changed = updateRunsAndReturnChanged();
         handleAwaiting(when, changed);
         return newEvent;
     }
 
-    private List<Run> updateRunsAndReturnChanged() {
-        List<Run> newRuns = Runs.compute(events);
+    private Running updateRunsAndReturnChanged() {
+        Running newRunning = Runs.compute(events);
+        final List<Run> oldRuns = this.runs.getRuns();
+        List<Run> newRuns = newRunning.getRuns();
         int at = newRuns.size() - 1;
         synchronized (this) {
             while (at >= 0) {
                 Run newR = newRuns.get(at);
-                int oldAt = at - newRuns.size() + this.runs.size();
+                int oldAt = at - newRuns.size() + oldRuns.size();
                 if (oldAt < 0) {
                     break;
                 }
-                Run oldR = this.runs.get(oldAt);
+                Run oldR = oldRuns.get(oldAt);
                 if (!newR.equals(oldR)) {
                     break;
                 }
                 at--;
             }
-            runs = newRuns;
+            runs = newRunning;
         }
-        return newRuns.subList(0, at + 1);
+        Running justChanged = newRunning.clone();
+        justChanged.getRuns().clear();
+        justChanged.getRuns().addAll(newRuns.subList(0, at + 1));
+        return justChanged;
     }
 
-    private void handleAwaiting(long newest, List<Run> changedRuns) {
+    private void handleAwaiting(long newest, Running changedRuns) {
         assert Thread.holdsLock(this);
         Iterator<Map.Entry<AsyncResponse, Request>> it;
         for (it = awaiting.entrySet().iterator(); it.hasNext(); ) {

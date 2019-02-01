@@ -17,7 +17,7 @@ import java.util.concurrent.TimeoutException;
 import org.apidesign.gate.timing.shared.Event;
 import org.apidesign.gate.timing.shared.Events;
 import org.apidesign.gate.timing.shared.Run;
-import org.apidesign.gate.timing.shared.RunInfo;
+import org.apidesign.gate.timing.shared.Running;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.junit.After;
 import static org.junit.Assert.assertEquals;
@@ -362,7 +362,7 @@ public class TimingResourceTest {
         if (newerThan > 0) {
             resource = resource.queryParam("newerThan", "" + newerThan);
         }
-        return resource.get(RunInfo.class).getRuns();
+        return resource.get(Running.class).getRuns();
     }
 
     private Event sendEvent(Client client, String type, final long at) {

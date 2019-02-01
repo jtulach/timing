@@ -22,7 +22,7 @@ public class RunsTest {
         Event finish1 = sendEvent(events, "FINISH", now + 1000);
         Event finish2 = sendEvent(events, "FINISH", now + 2000);
 
-        List<Run> runs1 = Runs.compute(events);
+        List<Run> runs1 = computeRuns(events);
 
         assertEquals("Four: " + runs1, 4, runs1.size());
 
@@ -38,7 +38,7 @@ public class RunsTest {
 
         Event ignore1 = sendEvent(events, "IGNORE", now + 9000, finish2.getId());
 
-        List<Run> runs2 = Runs.compute(events);
+        List<Run> runs2 = computeRuns(events);
 
         assertEquals("Four: " + runs2, 4, runs2.size());
 
@@ -60,30 +60,53 @@ public class RunsTest {
 
         Event start1 = sendEvent(events, "START", now + 100);
 
-        List<Run> runs1 = Runs.compute(events);
+        List<Run> runs1 = computeRuns(events);
         assertEquals("One run", 1, runs1.size());
         assertEquals("Assigned to nobody", 0, runs1.get(0).getWho());
 
         Event assign1 = sendEvent(events, "ASSIGN", now + 400, start1.getId(), 77);
 
-        List<Run> runs2 = Runs.compute(events);
+        List<Run> runs2 = computeRuns(events);
         assertEquals("Still One run", 1, runs2.size());
         assertEquals("Assigned to 77", 77, runs2.get(0).getWho());
+    }
+
+    @Test
+    public void onStartBehavior() {
+        NavigableSet<Event> events = new TreeSet<>(Events.COMPARATOR);
+        long now = System.currentTimeMillis();
+
+        Event assign1 = sendEvent(events, Events.ASSIGN, now + 50, -1, 77);
+
+        Event start1 = sendEvent(events, Events.START, now + 100);
+        assertNotNull(start1);
+
+        List<Run> runs1 = computeRuns(events);
+        assertEquals("One run", 1, runs1.size());
+        assertEquals("Assigned to 77", 77, runs1.get(0).getWho());
+
+
+        Event start2 = sendEvent(events, Events.START, now + 2000);
+
+        List<Run> runs2 = computeRuns(events);
+        assertEquals("2nd run", 2, runs2.size());
+        assertEquals("Assigned to nobody", 0, runs2.get(0).getWho());
+        assertEquals("Remains assigned to 77", 77, runs2.get(1).getWho());
     }
 
     @Test
     public void ignoringAnEventOfStart() {
         NavigableSet<Event> events = new TreeSet<>(Events.COMPARATOR);
         events.add(new Event().withId(22).withType(Events.START).withWhen(432));
-        List<Run> runs1 = Runs.compute(events);
+        List<Run> runs1 = computeRuns(events);
         assertEquals("One event", 1, runs1.size());
 
         events.add(new Event().withId(23).withType(Events.START).withWhen(433));
-        List<Run> runs2 = Runs.compute(events);
+        List<Run> runs2 = computeRuns(events);
         assertEquals("Two events", 2, runs2.size());
 
         events.add(new Event().withId(24).withType(Events.IGNORE).withWhen(455).withRef(22));
-        List<Run> runs3 = Runs.compute(events);
+        List<Run> runs3 = computeRuns(events);
         assertEquals("One event again", 1, runs3.size());
     }
 
@@ -116,4 +139,7 @@ public class RunsTest {
         assertEquals(time, took);
     }
 
+    private static List<Run> computeRuns(NavigableSet<Event> events) {
+        return Runs.compute(events).getRuns();
+    }
 }

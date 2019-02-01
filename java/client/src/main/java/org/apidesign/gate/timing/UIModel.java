@@ -15,7 +15,7 @@ import net.java.html.json.OnPropertyChange;
 import net.java.html.json.OnReceive;
 import net.java.html.json.Property;
 import org.apidesign.gate.timing.shared.Run;
-import org.apidesign.gate.timing.shared.RunInfo;
+import org.apidesign.gate.timing.shared.Running;
 
 @Model(className = "UI", targetId="", builder="with", instance = true, properties = {
     @Property(name = "url", type = String.class),
@@ -51,6 +51,10 @@ final class UIModel {
     static void chooseContact(UI ui, Avatar data) {
         ui.setChoose(data);
         data.onSelect(() -> {
+            if (ui.getNextOnStart() == data) {
+                ui.updateWhoRef(ui.getUrl(), "" + data.getContact().getId(), "-1", ui.getUrl());
+                return;
+            }
             for (Record r : ui.getRecords()) {
                 if (r.getWho() == data && data.getContact() != null) {
                     int who = r.getWho().getContact().getId();
@@ -91,7 +95,7 @@ final class UIModel {
     //
 
     @OnReceive(url = "{url}/runs", onError = "cannotConnect")
-    static void loadRuns(UI ui, RunInfo runs, String previousURL) {
+    static void loadRuns(UI ui, Running runs, String previousURL) {
         List<Record> oldRecords = ui.getRecords();
         List<Record> newRecords = Models.asList();
         int currentId = Integer.MAX_VALUE;
@@ -109,6 +113,14 @@ final class UIModel {
         final Record[] result = newRecords.toArray(new Record[newRecords.size()]);
         ui.withRecords(result);
         ui.setMessage("Máme tu " + result.length + " jízd.");
+        if (runs.getStarting() >= 0) {
+            for (Contact c : ui.getContacts()) {
+                if (c.getId() == runs.getStarting()) {
+                    ui.getNextOnStart().setContact(c);
+                    break;
+                }
+            }
+        }
         ui.checkPendingRuns(runs.getTimestamp(), previousURL);
     }
 
@@ -224,7 +236,7 @@ final class UIModel {
     }
 
     @OnReceive(url = "{url}/runs?newerThan={since}", onError = "cannotLoadPending")
-    static void loadPendingRuns(UI model, RunInfo runs, String previousUrl) {
+    static void loadPendingRuns(UI model, Running runs, String previousUrl) {
         loadRuns(model, runs, previousUrl);
     }
 
