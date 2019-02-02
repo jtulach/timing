@@ -19,7 +19,9 @@ import org.apidesign.gate.timing.shared.Run;
 import org.apidesign.gate.timing.shared.Running;
 import org.apidesign.gate.timing.shared.Runs;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -48,6 +50,7 @@ public class UIModelTest {
             records[i] = new Record().withCurrent(ui.getCurrent()).withRun(res.get(i));
             records[i].findWhoAvatar(ui.getContacts());
         }
+        UIModel.markFirstFinished(Arrays.asList(records));
         ui.withRecords(records);
         ui.selectNextOnStart(info.getStarting());
         ui.setMessage("Máme tu " + records.length + " jízd.");
@@ -214,6 +217,14 @@ public class UIModelTest {
 
         assertNull("Second start hasn't finished yet", model.getRecords().get(1).getFinish());
         assertNull("3rd start hasn't finished yet", model.getRecords().get(0).getFinish());
+
+        assertTrue("First finished", startRecord.isFirstFinished());
+
+        final Event secondFinish = new Event().withId(7).withType(Events.FINISH).withWhen(now + 49000);
+        loadEvents(model, secondFinish);
+
+        assertTrue("This one is first finished now", model.getRecords().get(1).isFirstFinished());
+        assertFalse("No longer first finished", model.getRecords().get(0).isFirstFinished());
     }
 
     @Test

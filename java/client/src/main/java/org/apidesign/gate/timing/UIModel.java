@@ -121,11 +121,24 @@ final class UIModel {
                 newRecords.add(record);
             }
         }
+        markFirstFinished(newRecords);
         final Record[] result = newRecords.toArray(new Record[newRecords.size()]);
         ui.withRecords(result);
         ui.selectNextOnStart(runs.getStarting());
         ui.setMessage("Máme tu " + result.length + " jízd.");
         ui.checkPendingRuns(runs.getTimestamp(), previousURL);
+    }
+
+    static void markFirstFinished(List<Record> newRecords) {
+        boolean foundFirst = false;
+        for (Record record : newRecords) {
+            if (!foundFirst && record.getFinish() != null) {
+                record.setFirstFinished(true);
+                foundFirst = true;
+                continue;
+            }
+            record.setFirstFinished(false);
+        }
     }
 
     @OnReceive(url = "{url}/add?type={type}&ref={ref}", onError = "cannotConnect")
