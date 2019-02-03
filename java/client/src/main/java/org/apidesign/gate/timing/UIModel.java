@@ -35,6 +35,8 @@ import org.apidesign.gate.timing.shared.Running;
     @Property(name = "records", type = Record.class, array = true),
 })
 final class UIModel {
+    private Connection currentConnection;
+
     @ComputedProperty
     static boolean showEvents(Object config, Contact edited, Avatar choose) {
         return config == null && choose == null && edited == null;
@@ -112,7 +114,7 @@ final class UIModel {
     //
 
     @OnReceive(url = "{url}/runs", onError = "cannotConnect")
-    static void loadRuns(UI ui, Running runs, String previousURL) {
+    static void loadRuns(UI ui, Running runs, Connection conn) {
         List<Record> oldRecords = ui.getRecords();
         List<Record> newRecords = Models.asList();
         int currentId = Integer.MAX_VALUE;
@@ -132,7 +134,9 @@ final class UIModel {
         ui.withRecords(result);
         ui.selectNextOnStart(runs.getStarting());
         ui.setMessage("Máme tu " + result.length + " jízd.");
-        ui.checkPendingRuns(runs.getTimestamp(), previousURL);
+        if (conn != null) {
+            ui.checkPendingRuns(runs.getTimestamp(), conn);
+        }
     }
 
     static void markFirstFinished(List<Record> newRecords) {
@@ -149,19 +153,19 @@ final class UIModel {
 
     @OnReceive(url = "{url}/add?type={type}&ref={ref}", onError = "cannotConnect")
     static void sendEvent(UI ui, Event reply, String previousURL) {
-        ui.loadRuns(ui.getUrl(), previousURL);
+        ui.loadRuns(ui.getUrl(), null);
     }
 
     @OnReceive(url = "{url}/add?type=ASSIGN&who={who}&ref={ref}", onError = "cannotConnect")
     static void updateWhoRef(UI ui, Event reply, String previousURL) {
-        ui.loadRuns(ui.getUrl(), previousURL);
+        ui.loadRuns(ui.getUrl(), null);
     }
 
     @OnReceive(url = "{url}/contacts", onError = "cannotConnect")
-    static void loadContacts(UI ui, Contact[] arr, String previousURL) {
+    static void loadContacts(UI ui, Contact[] arr, Connection conn) {
         ui.withContacts(arr);
         ui.setMessage("Máme tu " + arr.length + " závodníků.");
-        ui.loadRuns(ui.getUrl(), previousURL);
+        ui.loadRuns(conn.url, conn);
     }
 
     @OnReceive(method = "POST", url = "{url}/contacts", data = Contact.class, onError = "cannotConnect")
@@ -202,19 +206,17 @@ final class UIModel {
     //
 
     @ModelOperation
-    static void checkPendingRuns(UI model, long timestamp, String previousURL) {
-        if (Objects.equals(model.getUrl(), previousURL)) {
-            model.loadPendingRuns(previousURL, String.valueOf(timestamp), previousURL);
+    void checkPendingRuns(UI model, long timestamp, Connection conn) {
+        if (Objects.equals(model.getUrl(), conn.url) && currentConnection == conn) {
+            model.loadPendingRuns(conn.url, String.valueOf(timestamp), conn);
         } else {
-            if (previousURL != null) {
-                cannotLoadPending(model, new Exception());
-            }
+            cannotLoadPending(model, new Exception());
         }
     }
 
     @OnReceive(url = "{url}/runs?newerThan={since}", onError = "cannotLoadPending")
-    static void loadPendingRuns(UI model, Running runs, String previousUrl) {
-        loadRuns(model, runs, previousUrl);
+    static void loadPendingRuns(UI model, Running runs, Connection conn) {
+        loadRuns(model, runs, conn);
     }
 
     static void cannotLoadPending(UI model, Exception ex) {
@@ -225,12 +227,15 @@ final class UIModel {
     // UI callback bindings
     //
 
-    @ModelOperation @Function static void connect(UI data) {
+    @ModelOperation
+    @Function
+    void connect(UI data) {
         final String u = data.getUrl();
         if (u.endsWith("/")) {
             data.setUrl(u.substring(0, u.length() - 1));
         }
-        data.loadContacts(data.getUrl(), data.getUrl());
+        currentConnection = new Connection(data.getUrl());
+        data.loadContacts(data.getUrl(), currentConnection);
     }
 
     @Function static void addContact(UI ui) {
@@ -331,4 +336,11 @@ final class UIModel {
         uiModel.getCurrent().start();
     }
 
+    static final class Connection {
+        final String url;
+
+        Connection(String url) {
+            this.url = url;
+        }
+    }
 }
