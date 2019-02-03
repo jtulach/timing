@@ -11,7 +11,9 @@
     </head>
     <body>
         <div class="home-menu pure-menu pure-menu-horizontal pure-menu-fixed">
-            <a class="pure-menu-heading" href="#"><span class="heading-text">SKI MB Timing</span></a>
+            <a class="pure-menu-heading" href="#" data-bind="click: $root.cancel"><span class="heading-text">SKI MB Timing</span></a>
+            <a class="pure-menu-item" href="#" data-bind="click: $root.setup"><span class="heading-text">Nastavení</span></a>
+            <a class="pure-menu-item" href="#" data-bind="click: $root.connect"><span class="heading-text">Načíst</span></a>
         </div>
         <div data-bind="visible: alert" id="alert">
             <a href="#alert" data-bind="text: message, click: hideAlert, css: {alert: alert}"></a>
@@ -130,6 +132,40 @@
             </form>
         </script>
 
+        <script type="text/html" id="edit-config">
+            <form id="contact-form" class="pure-form pure-form-aligned">
+                <fieldset>
+                    <div class="pure-control-group">
+                        <label for="first-name">Měření</label>
+                        <input class="pure-input-1-2" type="text" placeholder="Trénink" data-bind="textInput: name" required>
+                    </div>
+                    <div class="pure-control-group">
+                        <label for="first-name">Datum</label>
+                        <input class="pure-input-1-2" type="date" placeholder="Dnes" data-bind="textInput: date" required>
+                    </div>
+                    <div class="pure-control-group">
+                        <label for="last-name">Minimum</label>
+                        <input class="pure-input-1-2" type="text" placeholder="-20% či 40s" data-bind="textInput: min" required>
+                    </div>
+                    <div class="pure-control-group">
+                        <label for="last-name">Maximum</label>
+                        <input class="pure-input-1-2" type="text" placeholder="₊20% či 70s" data-bind="textInput: max" required>
+                    </div>
+                    <div class="pure-control-group">
+                        <label for="last-name">Server</label>
+                        <input class="pure-input-1-2" type="text" placeholder="₊20% či 70s" data-bind="textInput: url" required>
+                    </div>
+                    <div class="pure-controls">
+                        <button  class="pure-button pure-button-primary" data-bind="click: $root.commit">OK</button>
+                        <button class="pure-button" data-bind="click: $root.cancel">Cancel</button>
+                    </div>
+                    <div class="pure-control-group">
+                        <label data-bind="text: $data"></label>
+                    </div>
+                </fieldset>
+            </form>
+        </script>
+
         <div data-bind="template: { name: 'list-events', if: showEvents }">
         </div>
 
@@ -139,13 +175,7 @@
         <div data-bind="template: { name: 'edit-contact', if: edited, data: edited }">
         </div>
 
-        <div id="sticky-footer" data-bind="visible: !edited()">
-            <form class="pure-form">
-                <fieldset>
-                    <input class="pure-input-2-3" type="url" data-bind="textInput: url" >
-                    <button class="pure-button pure-button-primary" data-bind="click: connect">Načíst</button>
-                </fieldset>
-            </form>
+        <div data-bind="template: { name: 'edit-config', if: config, data: config }">
         </div>
                 <!-- ${browser.bootstrap} -->
             </body>

@@ -28,6 +28,7 @@ import org.apidesign.gate.timing.shared.Running;
     @Property(name = "contacts", type = Contact.class, array = true),
     @Property(name = "selected", type = Contact.class),
     @Property(name = "edited", type = Contact.class),
+    @Property(name = "config", type = Config.class),
 
     @Property(name = "nextOnStart", type = Avatar.class),
 
@@ -35,13 +36,18 @@ import org.apidesign.gate.timing.shared.Running;
 })
 final class UIModel {
     @ComputedProperty
-    static boolean showEvents(Contact edited, Avatar choose) {
-        return choose == null && edited == null;
+    static boolean showEvents(Object config, Contact edited, Avatar choose) {
+        return config == null && choose == null && edited == null;
     }
 
     @ComputedProperty
-    static boolean showContacts(Contact edited, Avatar choose) {
-        return choose != null && edited == null;
+    static boolean showContacts(Object config, Contact edited, Avatar choose) {
+        return config == null && choose != null && edited == null;
+    }
+
+    @Function
+    static void setup(UI ui) {
+        ui.setConfig(new Config().withUi(ui));
     }
 
     @Function
@@ -254,13 +260,22 @@ final class UIModel {
     @Function static void cancel(UI ui) {
         ui.setEdited(null);
         ui.setSelected(null);
+        ui.setConfig(null);
+        ui.setChoose(null);
     }
 
     @Function static void commit(UI ui) {
         final Contact e = ui.getEdited();
-        if (e == null) {
-            return;
+        if (e != null) {
+            commitContact(ui, e);
         }
+        final Config c = ui.getConfig();
+        if (c != null) {
+            commitConfig(ui, c);
+        }
+    }
+
+    private static void commitContact(UI ui, Contact e) {
         String invalid = null;
         if (e.getValidate() != null) {
             invalid = e.getValidate();
@@ -279,6 +294,10 @@ final class UIModel {
         }
 
         contactSelected(ui, e);
+    }
+
+    private static void commitConfig(UI ui, Config c) {
+
     }
 
     @Function static void addPhoneEdited(UI ui) {
@@ -306,6 +325,7 @@ final class UIModel {
         uiModel.setEdited(null);
         uiModel.setSelected(null);
         uiModel.setChoose(null);
+        uiModel.setConfig(null);
         uiModel.applyBindings();
         uiModel.connect();
         uiModel.getCurrent().start();
