@@ -18,13 +18,16 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import org.apidesign.gate.timing.shared.Event;
 import org.apidesign.gate.timing.shared.Events;
 import org.apidesign.gate.timing.shared.Run;
 import org.apidesign.gate.timing.shared.Running;
+import org.apidesign.gate.timing.shared.Settings;
 import org.apidesign.gate.timing.shared.Runs;
 
 @Path("/timing/") @Singleton
@@ -37,13 +40,32 @@ public final class TimingResource {
     private Storage storage;
     @Inject
     private ContactsResource contacts;
+    @Inject
+    private AdminResource admin;
+    @Inject
+    private Settings settings;
 
     public TimingResource() {
     }
 
     @PostConstruct
-    public synchronized void init() throws IOException {
-        storage.readInto("timing", Event.class, events);
+    public void init() throws IOException {
+        admin.register(this);
+        reloadSettings();
+    }
+
+    void updateSettings(String name, String date, String min, String max) {
+        settings.withName(name);
+        try {
+            reloadSettings();
+        } catch (IOException ex) {
+            throw new WebApplicationException(ex.getMessage(), ex, Response.Status.NOT_FOUND);
+        }
+    }
+
+    private synchronized void reloadSettings() throws IOException {
+        events.clear();
+        storage.readInto(settings.getName(), Event.class, events);
         for (Event e : events) {
             if (e.getId() > counter) {
                 counter = e.getId();
@@ -55,6 +77,10 @@ public final class TimingResource {
             );
         }
         updateRunsAndReturnChanged();
+    }
+
+    synchronized Settings settings() {
+        return settings.clone();
     }
 
     @GET @Produces(MediaType.APPLICATION_JSON)
@@ -156,7 +182,7 @@ public final class TimingResource {
             withWho(who).
             withType(type);
         events.add(newEvent);
-        storage.scheduleStore("timings", Event.class, events);
+        storage.scheduleStore(settings.getName(), Event.class, events);
         Running changed = updateRunsAndReturnChanged();
         handleAwaiting(when, changed);
         return newEvent;
@@ -205,6 +231,11 @@ public final class TimingResource {
     @Path("contacts")
     public ContactsResource getContacts() {
         return contacts;
+    }
+
+    @Path("admin")
+    public AdminResource getAdmin() {
+        return admin;
     }
 
     private static final class Request {

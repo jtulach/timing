@@ -10,6 +10,7 @@ import java.util.Enumeration;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerResponseContext;
 import javax.ws.rs.container.ContainerResponseFilter;
+import org.apidesign.gate.timing.shared.Settings;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
@@ -48,13 +49,16 @@ final class Main implements ContainerResponseFilter {
 
     static HttpServer createServer(URI u, File dir) {
         ResourceConfig rc = new ResourceConfig(
-            TimingResource.class, ContactsResource.class, Main.class
+            TimingResource.class, ContactsResource.class,
+            AdminResource.class, Main.class
         );
         final Storage storage = dir == null ? Storage.empty() : Storage.forDirectory(dir);
+        final Settings settings = new Settings().withName("timings");
         rc.registerInstances(new AbstractBinder() {
             @Override
             protected void configure() {
                 bind(storage).to(Storage.class);
+                bind(settings).to(Settings.class);
             }
         });
         HttpServer server = GrizzlyHttpServerFactory.createHttpServer(u, rc);

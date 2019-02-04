@@ -90,4 +90,11 @@ final class Storage {
             Models.parse(def, type, is, collectTo);
         }
     }
+
+    String[] files() {
+        if (dir == null) {
+            return new String[0];
+        }
+        return dir.list();
+    }
 }
