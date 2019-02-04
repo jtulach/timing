@@ -262,7 +262,9 @@ final class UIModel {
         }
     }
 
-    @Function static void cancel(UI ui) {
+    @ModelOperation
+    @Function
+    static void cancel(UI ui) {
         ui.setEdited(null);
         ui.setSelected(null);
         ui.setConfig(null);

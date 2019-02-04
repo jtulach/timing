@@ -31,6 +31,7 @@ import org.junit.runner.RunWith;
 public class IntegrationTest {
     @Test public void testUIModelUI() {
         UI model = new UI();
+        model.cancel();
         model.applyBindings();
         model.getContacts().clear();
         model.getContacts().add(new Contact().withId(1).withName("Toni"));
