@@ -5,8 +5,6 @@ import com.sun.jersey.api.client.ClientHandlerException;
 import com.sun.jersey.api.client.GenericType;
 import com.sun.jersey.api.client.UniformInterfaceException;
 import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.api.client.config.ClientConfig;
-import com.sun.jersey.api.client.config.DefaultClientConfig;
 import java.net.ServerSocket;
 import java.net.URI;
 import java.util.List;
@@ -393,7 +391,6 @@ public class TimingResourceTest {
 
         WebResource loadAnother = client.resource(baseUri.resolve("admin")).queryParam("name", "new race");
 
-        System.err.println("client: " + client.getMessageBodyWorkers());
         Settings newRace = loadAnother.type(MediaType.APPLICATION_JSON).put(Settings.class, new Settings().withMin("33"));
         assertEquals("new race", newRace.getName());
 
@@ -401,6 +398,36 @@ public class TimingResourceTest {
         assertEquals("Got empty result" + emptyResult, 0, emptyResult.getRuns().size());
         assertEquals("new race", emptyResult.getSettings().getName());
         assertEquals("33", emptyResult.getSettings().getMin());
+    }
+
+    @Test
+    public void minimumTime() throws Exception {
+        Client client = new Client();
+
+        WebResource loadAnother = client.resource(baseUri.resolve("admin")).queryParam("name", "33s and more");
+        Settings newRace = loadAnother.type(MediaType.APPLICATION_JSON).put(Settings.class, new Settings().withMin("33"));
+        assertEquals("33s and more", newRace.getName());
+
+        WebResource resource = client.resource(baseUri).path("runs");
+        Running r = resource.get(Running.class);
+        assertEquals("No runs yet" + r, 0, r.getRuns().size());
+        assertEquals("Name is", "33s and more", r.getSettings().getName());
+
+        final long now = r.getTimestamp();
+        sendEvent(client, "START", now + 200);
+        r = resource.get(Running.class);
+        assertEquals("One run", 1, r.getRuns().size());
+        assertNull("One run is not finished", r.getRuns().get(0).getFinish());
+
+        sendEvent(client, "FINISH", now + 30000);
+        r = resource.get(Running.class);
+        assertEquals("One run still", 1, r.getRuns().size());
+        assertNull("One run is still not finished", r.getRuns().get(0).getFinish());
+
+        sendEvent(client, "FINISH", now + 40000);
+        r = resource.get(Running.class);
+        assertEquals("One run again", 1, r.getRuns().size());
+        assertNotNull("One run is finished", r.getRuns().get(0).getFinish());
     }
 
     private List<Run> loadRuns(Client client, long newerThan) throws ClientHandlerException, UniformInterfaceException {

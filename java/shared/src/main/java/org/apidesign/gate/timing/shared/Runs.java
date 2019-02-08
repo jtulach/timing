@@ -64,6 +64,10 @@ public final class Runs {
     }
 
     public static Running compute(NavigableSet<Event> set) {
+        return compute(set, Long.MIN_VALUE, Long.MAX_VALUE);
+    }
+
+    public static Running compute(NavigableSet<Event> set, long min, long max) {
         LinkedHashMap<Integer, Run> run = new LinkedHashMap<>();
         LinkedList<Run> running = new LinkedList<>();
 
@@ -93,9 +97,14 @@ public final class Runs {
                     if (running.isEmpty()) {
                         continue;
                     }
-                    Run r = running.removeFirst();
+                    Run r = running.peekFirst();
+                    long took = ev.getWhen() - r.getStart().getWhen();
+                    if (took < min || took > max) {
+                        continue;
+                    }
                     r.withFinish(ev);
                     Run prev = run.put(ev.getId(), r);
+                    running.removeFirst();
                     assert prev == null;
                     break;
                 }
