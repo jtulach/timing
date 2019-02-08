@@ -1,3 +1,6 @@
+[![Build Status](https://travis-ci.org/jtulach/timing.svg?branch=master)](https://travis-ci.org/jtulach/timing)
+[![Build Status](http://hudson.apidesign.org/hudson/buildStatus/icon?job=skimb)](http://hudson.apidesign.org/hudson/job/skimb/)
+
 ## Na startu
 
 Po zapnutí krabičky, se rozsvítí červeně a svítí (nebliká) dokud se 
