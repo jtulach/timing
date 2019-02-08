@@ -5,6 +5,8 @@ import com.sun.jersey.api.client.ClientHandlerException;
 import com.sun.jersey.api.client.GenericType;
 import com.sun.jersey.api.client.UniformInterfaceException;
 import com.sun.jersey.api.client.WebResource;
+import com.sun.jersey.api.client.config.ClientConfig;
+import com.sun.jersey.api.client.config.DefaultClientConfig;
 import java.net.ServerSocket;
 import java.net.URI;
 import java.util.List;
@@ -14,10 +16,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import javax.ws.rs.core.MediaType;
 import org.apidesign.gate.timing.shared.Event;
 import org.apidesign.gate.timing.shared.Events;
 import org.apidesign.gate.timing.shared.Run;
 import org.apidesign.gate.timing.shared.Running;
+import org.apidesign.gate.timing.shared.Settings;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.junit.After;
 import static org.junit.Assert.assertEquals;
@@ -355,6 +359,48 @@ public class TimingResourceTest {
 
         assertFinished(-1, incrementalRuns.get(0), 4);
         assertFinished(4700, incrementalRuns.get(1), 3);
+    }
+
+    @Test
+    public void loadNewListOfRecords() throws Exception {
+        Client client = new Client();
+
+        WebResource resource = client.resource(baseUri).path("runs");
+        Running r = resource.get(Running.class);
+        assertEquals("No runs yet" + r, 0, r.getRuns().size());
+        assertEquals("Default name is", "timings", r.getSettings().getName());
+
+        final long now = r.getTimestamp();
+        Future<Running> request0 = async(() -> {
+            return resource.queryParam("newerThan", "" + now).get(Running.class);
+        });
+
+        Future<Running> request30000 = async(() -> {
+            return resource.queryParam("newerThan", "" + (now + 30000)).get(Running.class);
+        });
+
+        sendEvent(client, "START", now + 200);
+
+        Running r1 = request0.get();
+        assertEquals("One run: " + r1, 1, r1.getRuns().size());
+
+        try {
+            Running noNewer = request30000.get(100, TimeUnit.MILLISECONDS);
+            fail("We shouldn't get an answer: " + noNewer);
+        } catch (TimeoutException timeoutException) {
+            // OK
+        }
+
+        WebResource loadAnother = client.resource(baseUri.resolve("admin")).queryParam("name", "new race");
+
+        System.err.println("client: " + client.getMessageBodyWorkers());
+        Settings newRace = loadAnother.type(MediaType.APPLICATION_JSON).put(Settings.class, new Settings().withMin("33"));
+        assertEquals("new race", newRace.getName());
+
+        Running emptyResult = request30000.get(100, TimeUnit.MILLISECONDS);
+        assertEquals("Got empty result" + emptyResult, 0, emptyResult.getRuns().size());
+        assertEquals("new race", emptyResult.getSettings().getName());
+        assertEquals("33", emptyResult.getSettings().getMin());
     }
 
     private List<Run> loadRuns(Client client, long newerThan) throws ClientHandlerException, UniformInterfaceException {

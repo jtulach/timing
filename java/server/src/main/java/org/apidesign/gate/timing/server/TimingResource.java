@@ -54,8 +54,11 @@ public final class TimingResource {
         reloadSettings();
     }
 
-    void updateSettings(String name, String date, String min, String max) {
-        settings.withName(name);
+    void updateSettings(Settings s) {
+        settings.withName(s.getName());
+        settings.withDate(s.getDate());
+        settings.withMin(s.getMin());
+        settings.withMax(s.getMax());
         try {
             reloadSettings();
         } catch (IOException ex) {
@@ -64,6 +67,7 @@ public final class TimingResource {
     }
 
     private synchronized void reloadSettings() throws IOException {
+        runs = new Running().withSettings(settings);
         events.clear();
         storage.readInto(settings.getName(), Event.class, events);
         for (Event e : events) {
@@ -77,6 +81,8 @@ public final class TimingResource {
             );
         }
         updateRunsAndReturnChanged();
+        // notify all
+        handleAwaiting(null, runs);
     }
 
     synchronized Settings settings() {
@@ -108,7 +114,12 @@ public final class TimingResource {
             awaiting.put(response, request);
             return;
         }
+        deliverAllEvents(request, response, changedRuns);
+    }
 
+    private synchronized void deliverAllEvents(
+        Request request, AsyncResponse response, Running changedRuns
+    ) {
         abstract class Loop<T> {
             abstract long when(T item);
             abstract T[] array(int size);
@@ -133,11 +144,14 @@ public final class TimingResource {
                 changedRuns = this.runs;
             }
             Running filterRuns = changedRuns.clone();
+            filterRuns.withSettings(settings());
             new Loop<Run>() {
+                @Override
                 long when(Run r) {
                     return Long.MAX_VALUE;
                 }
 
+                @Override
                 Run[] array(int size) {
                     return new Run[size];
                 }
@@ -209,19 +223,23 @@ public final class TimingResource {
             runs = newRunning;
         }
         Running justChanged = newRunning.clone();
+        justChanged.withSettings(settings());
         justChanged.getRuns().clear();
         justChanged.getRuns().addAll(newRuns.subList(0, at + 1));
         return justChanged;
     }
 
-    private void handleAwaiting(long newest, Running changedRuns) {
+    private void handleAwaiting(Long newest, Running changedRuns) {
         assert Thread.holdsLock(this);
         Iterator<Map.Entry<AsyncResponse, Request>> it;
         for (it = awaiting.entrySet().iterator(); it.hasNext(); ) {
             Map.Entry<AsyncResponse, Request> entry = it.next();
             AsyncResponse ar = entry.getKey();
             Request since = entry.getValue();
-            if (since.newerThan <= newest) {
+            if (newest == null) {
+                it.remove();
+                deliverAllEvents(since, ar, changedRuns);
+            } else if (since.newerThan <= newest) {
                 it.remove();
                 allEvents(since, ar, changedRuns);
             }

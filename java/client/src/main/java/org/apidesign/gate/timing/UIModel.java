@@ -1,6 +1,5 @@
 package org.apidesign.gate.timing;
 
-import java.util.Iterator;
 import org.apidesign.gate.timing.js.Dialogs;
 import org.apidesign.gate.timing.shared.Contact;
 import org.apidesign.gate.timing.shared.Event;
@@ -16,6 +15,7 @@ import net.java.html.json.OnReceive;
 import net.java.html.json.Property;
 import org.apidesign.gate.timing.shared.Run;
 import org.apidesign.gate.timing.shared.Running;
+import org.apidesign.gate.timing.shared.Settings;
 
 @Model(className = "UI", targetId="", builder="with", instance = true, properties = {
     @Property(name = "url", type = String.class),
@@ -33,6 +33,7 @@ import org.apidesign.gate.timing.shared.Running;
     @Property(name = "nextOnStart", type = Avatar.class),
 
     @Property(name = "records", type = Record.class, array = true),
+    @Property(name = "settings", type = Settings.class),
 })
 final class UIModel {
     private Connection currentConnection;
@@ -49,7 +50,14 @@ final class UIModel {
 
     @Function
     static void setup(UI ui) {
-        ui.setConfig(new Config().withUi(ui));
+        Settings s = ui.getSettings();
+
+        Config c = new Config().withUi(ui);
+        c.setName(s.getName());
+        c.setDate(s.getDate());
+        c.setMax(s.getMax());
+        c.setMin(s.getMin());
+        ui.setConfig(c);
     }
 
     @Function
@@ -117,7 +125,7 @@ final class UIModel {
     static void loadRuns(UI ui, Running runs, Connection conn) {
         List<Record> oldRecords = ui.getRecords();
         List<Record> newRecords = Models.asList();
-        int currentId = Integer.MAX_VALUE;
+        int currentId = 0;
         for (Run run : runs.getRuns()) {
             Record record = new Record().withCurrent(ui.getCurrent()).withRun(run);
             record.findWhoAvatar(ui.getContacts());
@@ -132,6 +140,8 @@ final class UIModel {
         markFirstFinished(newRecords);
         final Record[] result = newRecords.toArray(new Record[newRecords.size()]);
         ui.withRecords(result);
+        Settings s = runs.getSettings();
+        ui.withSettings(s);
         ui.selectNextOnStart(runs.getStarting());
         ui.setMessage("Máme tu " + result.length + " jízd.");
         if (conn != null) {
@@ -166,6 +176,11 @@ final class UIModel {
         ui.withContacts(arr);
         ui.setMessage("Máme tu " + arr.length + " závodníků.");
         ui.loadRuns(conn.url, conn);
+    }
+
+    @OnReceive(method = "PUT", data = Settings.class, url = "{url}/admin?name={name}")
+    static void updateConfig(UI ui, Settings data) {
+        ui.withSettings(data);
     }
 
     @OnReceive(method = "POST", url = "{url}/contacts", data = Contact.class, onError = "cannotConnect")
@@ -304,7 +319,13 @@ final class UIModel {
     }
 
     private static void commitConfig(UI ui, Config c) {
-
+        Settings s = new Settings().
+            withName(c.getName()).
+            withDate(c.getDate()).
+            withMin(c.getMin()).
+            withMax(c.getMax());
+        ui.updateConfig(c.getUrl(), c.getName(), s);
+        ui.cancel();
     }
 
     @Function static void addPhoneEdited(UI ui) {

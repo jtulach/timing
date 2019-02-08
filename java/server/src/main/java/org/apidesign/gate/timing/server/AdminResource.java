@@ -6,8 +6,8 @@ import java.util.List;
 import java.util.ListIterator;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.GET;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
@@ -27,20 +27,24 @@ public class AdminResource {
     }
 
 
-    @GET
+    @PUT
+    @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Settings config(
         @QueryParam("name") String name,
-        @QueryParam("date") String date,
-        @QueryParam("min") @DefaultValue("") String min,
-        @QueryParam("max") @DefaultValue("") String max
+        Settings data
     ) {
-        if (name != null) {
-            if (!isValidName(name)) {
-                throw new WebApplicationException("Unacceptable name: " + name, Response.Status.NOT_ACCEPTABLE);
-            }
-            main.updateSettings(name, date, min, max);
+        if (name != null && !name.isEmpty()) {
+            data.setName(name);
         }
+        return config(data);
+    }
+
+    private Settings config(Settings data) {
+        if (!isValidName(data.getName())) {
+            throw new WebApplicationException("Unacceptable name: " + data.getName(), Response.Status.NOT_ACCEPTABLE);
+        }
+        main.updateSettings(data);
 
         List<String> measurements = listMeasurements();
         final Settings setup = main.settings();
@@ -62,8 +66,9 @@ public class AdminResource {
             String base = file.substring(0, file.length() - 5);
             if (!isValidName(base)) {
                 it.remove();
+            } else {
+                it.set(base);
             }
-            it.set(base);
         }
         return measurements;
     }

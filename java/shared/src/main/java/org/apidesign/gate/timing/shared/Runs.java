@@ -15,6 +15,7 @@ import net.java.html.json.Property;
 @Model(className = "Running", builder = "with", properties = {
     @Property(name = "timestamp", type = long.class),
     @Property(name = "starting", type = int.class),
+    @Property(name = "settings", type = Settings.class),
     @Property(name = "runs", type = Run.class, array = true),
 })
 public final class Runs {

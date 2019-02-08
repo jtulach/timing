@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>SKI Mb Timing</title>
+        <title>Časomíra</title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <link href="pure-release-0.6.2/pure-min.css" rel="stylesheet" type="text/css"/>
         <link href="pure-release-0.6.2/grids-responsive-min.css" rel="stylesheet" type="text/css"/>
@@ -11,7 +11,9 @@
     </head>
     <body>
         <div class="home-menu pure-menu pure-menu-horizontal pure-menu-fixed">
-            <a class="pure-menu-heading" href="#" data-bind="click: $root.cancel"><span class="heading-text">SKI MB Timing</span></a>
+            <a class="pure-menu-heading" href="#" data-bind="click: $root.cancel"><span class="heading-text" data-bind="with: settings">
+                    <span data-bind="text: name">Časomíra</span>
+            </span></a>
             <a class="pure-menu-item" href="#" data-bind="click: $root.setup"><span class="heading-text">Nastavení</span></a>
             <a class="pure-menu-item" href="#" data-bind="click: $root.connect"><span class="heading-text">Načíst</span></a>
         </div>
@@ -158,9 +160,6 @@
                     <div class="pure-controls">
                         <button  class="pure-button pure-button-primary" data-bind="click: $root.commit">OK</button>
                         <button class="pure-button" data-bind="click: $root.cancel">Cancel</button>
-                    </div>
-                    <div class="pure-control-group">
-                        <label data-bind="text: $data"></label>
                     </div>
                 </fieldset>
             </form>
