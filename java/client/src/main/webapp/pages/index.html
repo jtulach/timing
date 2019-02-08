@@ -92,9 +92,10 @@
                         </span>
                     </div>
                     <div class="pure-u-3-8">
-                        <span>
+                        <span data-bind="ifnot: dnf">
                             <span data-bind="text: seconds"></span>:<span data-bind="text: hundreds"></span>
                         </span>
+                        <span data-bind="if: dnf">DNF</span>
                     </div>
                     <div class="pure-u-1-8">
                         <span class="awesome-button"  data-bind="click: $root.ignoreEvent">

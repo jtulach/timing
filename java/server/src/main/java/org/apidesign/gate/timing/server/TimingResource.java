@@ -209,8 +209,14 @@ public final class TimingResource {
         } catch (Exception ex) {
             // ignore
         }
+        long max = Long.MAX_VALUE;
+        try {
+            max = Long.parseLong(settings().getMax()) * 1000L;
+        } catch (Exception ex) {
+            // ignore
+        }
 
-        Running newRunning = Runs.compute(events, min, Long.MAX_VALUE);
+        Running newRunning = Runs.compute(events, min, max);
         final List<Run> oldRuns = this.runs.getRuns();
         List<Run> newRuns = newRunning.getRuns();
         int at = newRuns.size() - 1;

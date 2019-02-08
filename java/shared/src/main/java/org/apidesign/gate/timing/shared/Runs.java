@@ -34,6 +34,11 @@ public final class Runs {
         }
 
         @ComputedProperty
+        static boolean dnf(Event start, Event finish) {
+            return start != null && start.equals(finish);
+        }
+
+        @ComputedProperty
         static long when(Event start, Event finish) {
             long at = 0L;
             if (start != null && start.getWhen() > at) {
@@ -79,6 +84,20 @@ public final class Runs {
             if (ev.getWhen() > newestEvent) {
                 newestEvent = ev.getWhen();
             }
+            for (;;) {
+                Run r = running.peekFirst();
+                if (r == null) {
+                    break;
+                }
+                long sinceR = newestEvent - r.getWhen();
+                if (sinceR > max) {
+                    running.remove();
+                    r.setFinish(r.getStart());
+                } else {
+                    break;
+                }
+            }
+
             switch (ev.getType()) {
                 case START: {
                     Run r = new Run();

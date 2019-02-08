@@ -28,6 +28,11 @@ final class RecordModel {
     }
 
     @ComputedProperty
+    static boolean dnf(Run run) {
+        return run.isDnf();
+    }
+
+    @ComputedProperty
     static String seconds(Run run, Current current) {
         Event start = run.getStart();
         Event finish = run.getFinish();

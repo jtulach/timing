@@ -25,6 +25,7 @@ import org.junit.After;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import org.junit.Before;
 import org.junit.Test;
@@ -428,6 +429,36 @@ public class TimingResourceTest {
         r = resource.get(Running.class);
         assertEquals("One run again", 1, r.getRuns().size());
         assertNotNull("One run is finished", r.getRuns().get(0).getFinish());
+    }
+
+    @Test
+    public void maximumTime() throws Exception {
+        Client client = new Client();
+
+        WebResource loadAnother = client.resource(baseUri.resolve("admin")).queryParam("name", "less than 33s");
+        Settings newRace = loadAnother.type(MediaType.APPLICATION_JSON).put(Settings.class, new Settings().withMax("33"));
+        assertEquals("less than 33s", newRace.getName());
+
+        WebResource resource = client.resource(baseUri).path("runs");
+        Running r = resource.get(Running.class);
+        assertEquals("No runs yet" + r, 0, r.getRuns().size());
+        assertEquals("Name is", "less than 33s", r.getSettings().getName());
+
+        final long now = r.getTimestamp();
+        sendEvent(client, "START", now + 200);
+        r = resource.get(Running.class);
+        assertEquals("One run", 1, r.getRuns().size());
+        assertNull("One run is not finished", r.getRuns().get(0).getFinish());
+
+        sendEvent(client, "START", now + 40000);
+        r = resource.get(Running.class);
+        assertEquals("Two runs", 2, r.getRuns().size());
+
+        Run on = r.getRuns().get(0);
+        assertNull("The second run continues", on.getFinish());
+
+        Run dnf = r.getRuns().get(1);
+        assertTrue("The original run is cancelled", dnf.isDnf());
     }
 
     private List<Run> loadRuns(Client client, long newerThan) throws ClientHandlerException, UniformInterfaceException {
