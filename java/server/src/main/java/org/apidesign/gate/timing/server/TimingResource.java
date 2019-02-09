@@ -203,20 +203,7 @@ public final class TimingResource {
     }
 
     private Running updateRunsAndReturnChanged() {
-        long min = Long.MIN_VALUE;
-        try {
-            min = Long.parseLong(settings().getMin()) * 1000L;
-        } catch (Exception ex) {
-            // ignore
-        }
-        long max = Long.MAX_VALUE;
-        try {
-            max = Long.parseLong(settings().getMax()) * 1000L;
-        } catch (Exception ex) {
-            // ignore
-        }
-
-        Running newRunning = Runs.compute(events, min, max);
+        Running newRunning = Runs.compute(events, settings().getMinMillis(), settings().getMaxMillis());
         final List<Run> oldRuns = this.runs.getRuns();
         List<Run> newRuns = newRunning.getRuns();
         int at = newRuns.size() - 1;
