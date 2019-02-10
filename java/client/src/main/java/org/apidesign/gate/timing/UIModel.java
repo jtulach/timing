@@ -60,7 +60,7 @@ final class UIModel {
 
     @Function
     static void selectMeasurement(UI ui, String data) {
-        System.err.println("data: " + data);
+        ui.selectConfig(ui.getUrl(), data);
     }
 
     @Function
@@ -196,6 +196,12 @@ final class UIModel {
     @OnReceive(method = "PUT", data = Settings.class, url = "{url}/admin?name={name}")
     static void updateConfig(UI ui, Settings data) {
         ui.withSettings(data);
+    }
+
+    @OnReceive(method = "GET", url = "{url}/admin?name={name}")
+    static void selectConfig(UI ui, Settings data) {
+        ui.withSettings(data);
+        ui.loadRuns(ui.getUrl(), new Connection(ui.getUrl()));
     }
 
     @OnReceive(method = "POST", url = "{url}/contacts", data = Contact.class, onError = "cannotConnect")

@@ -256,6 +256,16 @@ public final class TimingResource {
         return contacts;
     }
 
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("admin")
+    public Settings config(
+        @QueryParam("name") String name
+    ) {
+        Settings data = new Settings().withName(name);
+        return config(data);
+    }
+
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
