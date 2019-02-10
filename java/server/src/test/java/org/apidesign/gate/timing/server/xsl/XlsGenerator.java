@@ -11,13 +11,17 @@ import org.apidesign.gate.timing.shared.Run;
 import org.apidesign.gate.timing.shared.Running;
 
 public final class XlsGenerator {
-    private final List<Row> names;
+    private final List<Row> rows;
 
     private XlsGenerator(List<Row> names) {
-        this.names = names;
+        this.rows = names;
     }
 
-    public static List<Row> create(Running stats, List<Contact> contacts) {
+    public List<Row> getRows() {
+        return Collections.unmodifiableList(rows);
+    }
+    
+    public static XlsGenerator create(Running stats, List<Contact> contacts) {
         Map<Integer, List<Long>> idToTimes = new HashMap<>();
         int round = 0;
         ListIterator<Run> it = stats.getRuns().listIterator(stats.getRuns().size() - 1);
@@ -91,7 +95,7 @@ public final class XlsGenerator {
             String c = findName(id, contacts);
             rows.add(new Row(c, idToTimes.get(id), average.get(id), minimum.get(id)));
         }
-        return rows;
+        return new XlsGenerator(rows);
     }
 
     private static String findName(int id, List<Contact> contacts) {
@@ -104,16 +108,32 @@ public final class XlsGenerator {
     }
 
     public static final class Row {
-        final String name;
-        final List<Long> times;
-        final long average;
-        final long minimum;
+        private final String name;
+        private final List<Long> times;
+        private final long average;
+        private final long minimum;
 
         Row(String name, List<Long> times, long average, long minimum) {
             this.name = name;
             this.times = times;
             this.average = average;
             this.minimum = minimum;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public List<Long> getTimes() {
+            return Collections.unmodifiableList(times);
+        }
+
+        public long getAvg() {
+            return average;
+        }
+
+        public long getMin() {
+            return minimum;
         }
     }
 }

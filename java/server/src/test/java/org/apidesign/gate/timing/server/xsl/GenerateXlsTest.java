@@ -43,12 +43,12 @@ public class GenerateXlsTest {
     @Test
     public void generateXls() {
         Running running = Runs.compute(events, 23000, 42000);
-        List<XlsGenerator.Row> rows = XlsGenerator. create(running, contacts);
+        List<XlsGenerator.Row> rows = XlsGenerator. create(running, contacts).getRows();
         System.err.println("Jméno               Nejlepší\tPrůměr\tČas v kolech");
         for (XlsGenerator.Row r : rows) {
-            String name20 = (r.name + "                   ").substring(0, 20);
-            System.err.print(name20 + Time.toString(r.minimum) + "\t" + Time.toString(r.average));
-            for (Long time : r.times) {
+            String name20 = (r.getName() + "                   ").substring(0, 20);
+            System.err.print(name20 + Time.toString(r.getMin()) + "\t" + Time.toString(r.getAvg()));
+            for (Long time : r.getTimes()) {
                 System.err.print("\t");
                 System.err.print(Time.toString(time));
             }
