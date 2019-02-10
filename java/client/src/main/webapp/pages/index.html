@@ -14,6 +14,14 @@
             <a class="pure-menu-heading" href="#" data-bind="click: $root.cancel"><span class="heading-text" data-bind="with: settings">
                     <span data-bind="text: name">Časomíra</span>
             </span></a>
+            <ul class="pure-menu-list">
+                <li class="pure-menu-item pure-menu-has-children pure-menu-allow-hover">
+                    <a href="#" class="pure-menu-link" data-bind="text: name">Časomíra</a>
+                    <ul class="pure-menu-children" data-bind="foreach: measurements">
+                        <li class="pure-menu-item"><a href="#" class="pure-menu-link" data-bind="text: $data, click: $root.selectMeasurement">Měření I.</a></li>
+                    </ul>
+                </li>
+            </ul>
             <a class="pure-menu-item" href="#" data-bind="click: $root.setup"><span class="heading-text">Nastavení</span></a>
             <a class="pure-menu-item" href="#" data-bind="click: $root.connect"><span class="heading-text">Načíst</span></a>
         </div>

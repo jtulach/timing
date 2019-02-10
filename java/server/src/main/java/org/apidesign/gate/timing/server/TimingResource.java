@@ -3,18 +3,23 @@ package org.apidesign.gate.timing.server;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.NavigableSet;
 import java.util.TreeSet;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
@@ -41,8 +46,6 @@ public final class TimingResource {
     @Inject
     private ContactsResource contacts;
     @Inject
-    private AdminResource admin;
-    @Inject
     private Settings settings;
 
     public TimingResource() {
@@ -50,7 +53,6 @@ public final class TimingResource {
 
     @PostConstruct
     public void init() throws IOException {
-        admin.register(this);
         reloadSettings();
     }
 
@@ -86,7 +88,10 @@ public final class TimingResource {
     }
 
     synchronized Settings settings() {
-        return settings.clone();
+        Settings s = settings.clone();
+        s.getMeasurements().clear();
+        s.getMeasurements().addAll(listMeasurements());
+        return s;
     }
 
     @GET @Produces(MediaType.APPLICATION_JSON)
@@ -251,9 +256,62 @@ public final class TimingResource {
         return contacts;
     }
 
+    @PUT
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
     @Path("admin")
-    public AdminResource getAdmin() {
-        return admin;
+    public Settings config(
+        @QueryParam("name") String name,
+        Settings data
+    ) {
+        if (name != null && !name.isEmpty()) {
+            data.setName(name);
+        }
+        return config(data);
+    }
+
+    private Settings config(Settings data) {
+        if (!isValidName(data.getName())) {
+            throw new WebApplicationException("Unacceptable name: " + data.getName(), Response.Status.NOT_ACCEPTABLE);
+        }
+        updateSettings(data);
+        return settings();
+    }
+
+    private List<String> listMeasurements() {
+        List<String> measurements = new LinkedList<>(Arrays.asList(storage.files()));
+        measurements.remove("people.json");
+        ListIterator<String> it = measurements.listIterator();
+        while (it.hasNext()) {
+            final String file = it.next();
+            if (!file.endsWith(".json")) {
+                it.remove();
+                continue;
+            }
+            String base = file.substring(0, file.length() - 5);
+            if (!isValidName(base)) {
+                it.remove();
+            } else {
+                it.set(base);
+            }
+        }
+        return measurements;
+    }
+
+    static boolean isValidName(String name) {
+        for (char ch : name.toCharArray()) {
+            if (Character.isAlphabetic(ch)) {
+                continue;
+            }
+            if (Character.isDigit(ch)) {
+                continue;
+            }
+            if (ch == ' ') {
+                continue;
+            }
+            return false;
+        }
+        return true;
     }
 
     private static final class Request {

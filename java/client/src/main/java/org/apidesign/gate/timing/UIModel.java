@@ -48,6 +48,21 @@ final class UIModel {
         return config == null && choose != null && edited == null;
     }
 
+    @ComputedProperty
+    static String name(Settings settings) {
+        return settings.getName();
+    }
+
+    @ComputedProperty
+    static List<String> measurements(Settings settings) {
+        return settings.getMeasurements();
+    }
+
+    @Function
+    static void selectMeasurement(UI ui, String data) {
+        System.err.println("data: " + data);
+    }
+
     @Function
     static void setup(UI ui) {
         Settings s = ui.getSettings();

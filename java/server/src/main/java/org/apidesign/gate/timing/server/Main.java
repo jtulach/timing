@@ -50,7 +50,7 @@ final class Main implements ContainerResponseFilter {
     static HttpServer createServer(URI u, File dir) {
         ResourceConfig rc = new ResourceConfig(
             TimingResource.class, ContactsResource.class,
-            AdminResource.class, Main.class
+            Main.class
         );
         final Storage storage = dir == null ? Storage.empty() : Storage.forDirectory(dir);
         final Settings settings = new Settings().withName("timings");
