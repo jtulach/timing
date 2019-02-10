@@ -18,4 +18,9 @@ public class TimeTest {
         assertEquals("  1:10", Time.toString(1100L));
     }
 
+    @Test
+    public void test1111() {
+        assertEquals(1.11, Time.toDouble(1111L), 0.01);
+    }
+
 }

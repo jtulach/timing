@@ -13,6 +13,17 @@ public final class Time {
         return new int[] { sec, hundreds };
     }
 
+    public static double toDouble(Long millis) {
+        if (millis == null) {
+            return Double.NaN;
+        } else if (millis == 0) {
+            return Double.POSITIVE_INFINITY;
+        } else {
+            int[] secHun = fromMillis(millis);
+            return secHun[0] + ((double)secHun[1]) * 0.01;
+        }
+    }
+
     public static String toString(Long millis) {
         if (millis == null) {
             return " --:--";

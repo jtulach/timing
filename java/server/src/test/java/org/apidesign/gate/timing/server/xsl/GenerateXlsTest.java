@@ -1,7 +1,12 @@
 package org.apidesign.gate.timing.server.xsl;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NavigableSet;
@@ -15,6 +20,9 @@ import org.apidesign.gate.timing.shared.Running;
 import org.apidesign.gate.timing.shared.Runs;
 import org.apidesign.gate.timing.shared.Time;
 import org.junit.Assert;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -41,18 +49,21 @@ public class GenerateXlsTest {
     }
 
     @Test
-    public void generateXls() {
+    public void generateXls() throws Exception {
         Running running = Runs.compute(events, 23000, 42000);
-        List<XlsGenerator.Row> rows = XlsGenerator. create(running, contacts).getRows();
-        System.err.println("Jméno               Nejlepší\tPrůměr\tČas v kolech");
-        for (XlsGenerator.Row r : rows) {
-            String name20 = (r.getName() + "                   ").substring(0, 20);
-            System.err.print(name20 + Time.toString(r.getMin()) + "\t" + Time.toString(r.getAvg()));
-            for (Long time : r.getTimes()) {
-                System.err.print("\t");
-                System.err.print(Time.toString(time));
-            }
-            System.err.println();
+        final XlsGenerator generator = XlsGenerator. create(running, contacts);
+        String res = generator.toString();
+        assertNotEquals(res, -1, res.indexOf("Hela"));
+        assertNotEquals(res, -1, res.indexOf("Deny"));
+        assertNotEquals(res, -1, res.indexOf("26:05"));
+        assertNotEquals(res, -1, res.indexOf("--:--"));
+        assertNotEquals(res, -1, res.indexOf("DNF"));
+        assertNotEquals(res, -1, res.indexOf("40:47"));
+
+
+        try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
+            generator.write(os);
+            assertTrue("4KB at least: " + os.size(), os.size() >= 4000);
         }
     }
 }
