@@ -1,7 +1,9 @@
 package org.apidesign.gate.timing.server;
 
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -254,6 +256,17 @@ public final class TimingResource {
     @Path("contacts")
     public ContactsResource getContacts() {
         return contacts;
+    }
+    
+    @GET
+    @Produces("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    @Path("výsledky.xlsx")
+    public byte[] asXlsx() throws IOException {
+        XlsGenerator doc = XlsGenerator.create(runs, contacts.allContacts());
+        try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
+            doc.write(os);
+            return os.toByteArray();
+        }
     }
 
     @GET

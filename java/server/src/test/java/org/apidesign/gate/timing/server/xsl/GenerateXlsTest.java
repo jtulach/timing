@@ -1,5 +1,6 @@
 package org.apidesign.gate.timing.server.xsl;
 
+import org.apidesign.gate.timing.server.XlsGenerator;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;

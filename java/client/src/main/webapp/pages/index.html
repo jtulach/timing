@@ -23,7 +23,8 @@
                 </li>
             </ul>
             <a class="pure-menu-item" href="#" data-bind="click: $root.setup"><span class="heading-text">Nastavení</span></a>
-            <a class="pure-menu-item" href="#" data-bind="click: $root.connect"><span class="heading-text">Načíst</span></a>
+            <a class="pure-menu-item" href="#" data-bind="click: $root.connect"><span class="heading-text">Obnovit</span></a>
+            <a class="pure-menu-item" href="#" data-bind="attr: { 'href' : $root.resultUrl }"><span class="heading-text">výsledky.xlsx</span></a>
         </div>
         <div data-bind="visible: alert" id="alert">
             <a href="#alert" data-bind="text: message, click: hideAlert, css: {alert: alert}"></a>

@@ -1,4 +1,4 @@
-package org.apidesign.gate.timing.server.xsl;
+package org.apidesign.gate.timing.server;
 
 import java.io.IOException;
 import java.io.OutputStream;

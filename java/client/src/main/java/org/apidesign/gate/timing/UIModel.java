@@ -49,6 +49,11 @@ final class UIModel {
     }
 
     @ComputedProperty
+    static String resultUrl(String url) {
+        return url + "/výsledky.xlsx";
+    }
+
+    @ComputedProperty
     static String name(Settings settings) {
         return settings.getName();
     }

@@ -106,7 +106,6 @@
             <groupId>org.apache.poi</groupId>
             <artifactId>poi-ooxml</artifactId>
             <version>3.17</version>
-            <scope>test</scope>
         </dependency>
     </dependencies>
     <build>
