@@ -73,10 +73,12 @@ final class UIModel {
         Settings s = ui.getSettings();
 
         Config c = new Config().withUi(ui);
-        c.setName(s.getName());
-        c.setDate(s.getDate());
-        c.setMax(s.getMax());
-        c.setMin(s.getMin());
+        if (s != null) {
+            c.setName(s.getName());
+            c.setDate(s.getDate());
+            c.setMax(s.getMax());
+            c.setMin(s.getMin());
+        }
         ui.setConfig(c);
     }
 
@@ -146,10 +148,12 @@ final class UIModel {
         List<Record> oldRecords = ui.getRecords();
         List<Record> newRecords = Models.asList();
         int currentId = 0;
+        List<Contact> used = Models.asList();
         for (Run run : runs.getRuns()) {
             Record record = new Record().withCurrent(ui.getCurrent()).withRun(run);
             record.findWhoAvatar(ui.getContacts());
             newRecords.add(record);
+            addUsed(used, record.getWho());
             currentId = run.getId();
         }
         for (Record record : oldRecords) {
@@ -161,12 +165,38 @@ final class UIModel {
         final Record[] result = newRecords.toArray(new Record[newRecords.size()]);
         ui.withRecords(result);
         Settings s = runs.getSettings();
-        ui.withSettings(s);
+        if (s != null) {
+            ui.withSettings(s);
+        }
         ui.selectNextOnStart(runs.getStarting());
         ui.setMessage("Máme tu " + result.length + " jízd.");
+
+        List<Contact> newOrder = Models.asList();
+        newOrder.addAll(ui.getContacts());
+        newOrder.removeAll(used);
+        newOrder.addAll(0, used);
+        ui.getContacts().clear();
+        ui.getContacts().addAll(newOrder);
+
         if (conn != null) {
             ui.checkPendingRuns(runs.getTimestamp(), conn);
         }
+    }
+
+    private static void addUsed(List<Contact> used, Avatar who) {
+        if (who == null) {
+            return;
+        }
+        Contact contact = who.getContact();
+        if (contact == null) {
+            return;
+        }
+        for (Contact u : used) {
+            if (u.getId() == contact.getId()) {
+                return;
+            }
+        }
+        used.add(0, contact);
     }
 
     static void markFirstFinished(List<Record> newRecords) {
