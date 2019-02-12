@@ -7,6 +7,9 @@ import java.net.InterfaceAddress;
 import java.net.NetworkInterface;
 import java.net.URI;
 import java.util.Enumeration;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerResponseContext;
 import javax.ws.rs.container.ContainerResponseFilter;
@@ -34,6 +37,8 @@ final class Main implements ContainerResponseFilter {
             dir = null;
         }
 
+        turnLoggingOn();
+
         HttpServer server = createServer(u, dir);
         System.err.println("Server running on following IP addresses:");
         dumpIPs();
@@ -45,6 +50,15 @@ final class Main implements ContainerResponseFilter {
         } finally {
             server.shutdownNow();
         }
+    }
+
+    private static void turnLoggingOn() {
+        Logger l = Logger.getLogger("org.glassfish.grizzly.http.server.HttpHandler");
+        l.setLevel(Level.FINE);
+        l.setUseParentHandlers(false);
+        ConsoleHandler ch = new ConsoleHandler();
+        ch.setLevel(Level.ALL);
+        l.addHandler(ch);
     }
 
     static HttpServer createServer(URI u, File dir) {
