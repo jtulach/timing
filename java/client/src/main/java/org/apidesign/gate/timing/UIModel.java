@@ -281,6 +281,9 @@ final class UIModel {
         if (Objects.equals(model.getUrl(), conn.url) && currentConnection == conn) {
             model.loadPendingRuns(conn.url, String.valueOf(timestamp), conn);
         } else {
+            if (currentConnection != null && conn.counter < currentConnection.counter) {
+                return;
+            }
             cannotLoadPending(model, new Exception());
         }
     }
@@ -416,10 +419,14 @@ final class UIModel {
     }
 
     static final class Connection {
+        private static int cnt;
+
         final String url;
+        final int counter;
 
         Connection(String url) {
             this.url = url;
+            this.counter = ++cnt;
         }
     }
 }
