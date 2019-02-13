@@ -12,8 +12,9 @@
     <body>
         <div class="home-menu pure-menu pure-menu-horizontal pure-menu-fixed">
             <a class="pure-menu-heading" href="#" data-bind="click: $root.cancel"><span class="heading-text" data-bind="with: settings">
-                    <span data-bind="text: name">Časomíra</span>
+                    <span>Měř!</span>
             </span></a>
+            <a class="pure-menu-item" href="#" data-bind="click: $root.connect"><span class="heading-text">Obnovit</span></a>
             <ul class="pure-menu-list">
                 <li class="pure-menu-item pure-menu-has-children pure-menu-allow-hover">
                     <a href="#" class="pure-menu-link" data-bind="text: name">Časomíra</a>
@@ -22,9 +23,8 @@
                     </ul>
                 </li>
             </ul>
-            <a class="pure-menu-item" href="#" data-bind="click: $root.setup"><span class="heading-text">Nastavení</span></a>
-            <a class="pure-menu-item" href="#" data-bind="click: $root.connect"><span class="heading-text">Obnovit</span></a>
             <a class="pure-menu-item" href="#" data-bind="attr: { 'href' : $root.resultUrl }"><span class="heading-text">výsledky.xlsx</span></a>
+            <a class="pure-menu-item" href="#" data-bind="click: $root.setup"><span class="heading-text">Nastavení</span></a>
         </div>
         <div data-bind="visible: alert" id="alert">
             <a href="#alert" data-bind="text: message, click: hideAlert, css: {alert: alert}"></a>
