@@ -90,6 +90,10 @@ public class UIModelTest {
 
         assertTrue("Ondra has alias: " + ondra, ondra.getAliases().contains("1798765010"));
         assertEquals("Ondra is selected", ondra, model.getNextOnStart().getContact());
+        
+        model.getNextOnStart().setContact(null);
+        model.selectNextOnStart(1798765010);
+        assertEquals("Ondra is known with his alias", ondra, model.getNextOnStart().getContact());
     }
 
     @Test

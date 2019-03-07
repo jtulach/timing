@@ -13,6 +13,7 @@ import net.java.html.json.Models;
 import net.java.html.json.OnPropertyChange;
 import net.java.html.json.OnReceive;
 import net.java.html.json.Property;
+import org.apidesign.gate.timing.shared.Contacts;
 import org.apidesign.gate.timing.shared.Run;
 import org.apidesign.gate.timing.shared.Running;
 import org.apidesign.gate.timing.shared.Settings;
@@ -146,13 +147,10 @@ final class UIModel {
     static void selectNextOnStart(UI ui, int id) {
         Contact selected;
         FOUND: if (id >= 0) {
-            for (Contact c : ui.getContacts()) {
-                if (c.getId() == id) {
-                    selected = c;
-                    break FOUND;
-                }
+            selected = Contacts.findById(ui.getContacts(), id);
+            if (selected == null) {
+                selected = new Contact().withId(id).withName("" + id);
             }
-            selected = new Contact().withId(id).withName("" + id);
         } else {
             selected = null;
         }
