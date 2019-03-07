@@ -1,11 +1,16 @@
 package org.apidesign.gate.timing.shared;
 
+import java.io.InputStream;
 import java.util.List;
 import java.util.NavigableSet;
 import java.util.TreeSet;
+import net.java.html.BrwsrCtx;
+import net.java.html.json.Models;
+import org.junit.Assert;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
 public class RunsTest {
@@ -150,6 +155,29 @@ public class RunsTest {
 
         final int actualWho60 = Runs.compute(events).getStarting();
         assertEquals("#60 automatically selected as next", 60, Runs.compute(events).getStarting());
+    }
+
+    @Test
+    public void pendingAliases() throws Exception {
+        InputStream is = RunsTest.class.getResourceAsStream("pendingAssign.json");
+        assertNotNull("pendignAssign.json found", is);
+
+        NavigableSet<Event> events = new TreeSet<>(Events.COMPARATOR);
+        Models.parse(BrwsrCtx.findDefault(RunsTest.class), Event.class, is, events);
+        Assert.assertEquals("Events: " + events, 57, events.size());
+
+        Running info = Runs.compute(events);
+        assertNotNull(info);
+
+        List<String> ids = info.getIdentities();
+
+        assertTrue("1798765010 is there:\n" + ids, ids.contains("1798765010"));
+        assertTrue("1138789307 is there:\n" + ids, ids.contains("1138789307"));
+        
+        Run lastRun = info.getRuns().get(0);
+        assertEquals(1138789307, lastRun.getWho());
+        
+        assertEquals(1798765010, info.getStarting());
     }
 
     private static int cnt;

@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.NavigableSet;
+import java.util.TreeSet;
 import net.java.html.json.ComputedProperty;
 import net.java.html.json.Model;
 import net.java.html.json.ModelOperation;
@@ -16,6 +17,7 @@ import net.java.html.json.Property;
     @Property(name = "timestamp", type = long.class),
     @Property(name = "starting", type = int.class),
     @Property(name = "settings", type = Settings.class),
+    @Property(name = "identities", type = String.class, array = true),
     @Property(name = "runs", type = Run.class, array = true),
 })
 public final class Runs {
@@ -75,6 +77,7 @@ public final class Runs {
     public static Running compute(NavigableSet<Event> set, long min, long max) {
         LinkedHashMap<Integer, Run> run = new LinkedHashMap<>();
         LinkedList<Run> running = new LinkedList<>();
+        TreeSet<String> identities = new TreeSet<>();
 
         long newestEvent = 0;
         int nextOnStart = -1;
@@ -165,6 +168,7 @@ public final class Runs {
                     if (r != null) {
                         r.setWho(ev.getWho());
                     }
+                    identities.add("" + ev.getWho());
                     break;
                 }
             }
@@ -182,6 +186,7 @@ public final class Runs {
         }
         return new Running().
             withRuns(res.toArray(new Run[res.size()])).
+            withIdentities(identities.toArray(new String[identities.size()])).
             withStarting(nextOnStart).
             withTimestamp(newestEvent);
     }

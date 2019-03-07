@@ -7,6 +7,7 @@ import net.java.html.json.Property;
 @Model(className = "Contact", builder = "with", properties = {
     @Property(name = "id", type = int.class),
     @Property(name = "name", type = String.class),
+    @Property(name = "aliases", type = String.class, array = true),
     @Property(name = "imgSrc", type = String.class),
 })
 final class Contacts {
