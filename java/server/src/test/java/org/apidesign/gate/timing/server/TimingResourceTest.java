@@ -15,6 +15,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import javax.ws.rs.core.MediaType;
+import org.apidesign.gate.timing.shared.Contact;
 import org.apidesign.gate.timing.shared.Event;
 import org.apidesign.gate.timing.shared.Events;
 import org.apidesign.gate.timing.shared.Run;
@@ -76,6 +77,30 @@ public class TimingResourceTest {
         assertNotNull(addedEvent);
         assertEquals(when, addedEvent.getWhen());
         assertEquals(Events.FINISH, addedEvent.getType());
+
+        WebResource resource = client.resource(baseUri);
+        List<Event> list = resource.get(new GenericType<List<Event>>() {});
+        assertEquals("Two elements " + list, 2, list.size());
+
+        assertEquals("First one is the added event", addedEvent, list.get(0));
+    }
+
+    @Test
+    public void testAddEventsResolvesAlias() {
+        Client client = new Client();
+        long when = System.currentTimeMillis() + 300;
+        WebResource contact = client.resource(baseUri.resolve("contacts"));
+        List<Contact> all = contact.type(MediaType.APPLICATION_JSON_TYPE).post(new GenericType<List<Contact>>(){}, new Contact().withName("test").withAliases("9999"));
+        assertEquals("One: " + all, 1, all.size());
+        assertEquals("test", all.get(0).getName());
+        int expectedId = all.get(0).getId();
+
+        WebResource add = client.resource(baseUri.resolve("add")).queryParam("type", "ASSIGN").queryParam("when", "" + when).queryParam("who", "9999").queryParam("ref", "-1");
+        Event addedEvent = add.get(Event.class);
+        assertNotNull(addedEvent);
+        assertEquals(when, addedEvent.getWhen());
+        assertEquals(Events.ASSIGN, addedEvent.getType());
+        assertEquals("The event ID has been resolved", expectedId, addedEvent.getWho());
 
         WebResource resource = client.resource(baseUri);
         List<Event> list = resource.get(new GenericType<List<Event>>() {});

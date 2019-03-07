@@ -30,6 +30,8 @@ import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import org.apidesign.gate.timing.shared.Contact;
+import org.apidesign.gate.timing.shared.Contacts;
 import org.apidesign.gate.timing.shared.Event;
 import org.apidesign.gate.timing.shared.Events;
 import org.apidesign.gate.timing.shared.Run;
@@ -196,6 +198,10 @@ public final class TimingResource {
     ) {
         if (when <= 0) {
             when = System.currentTimeMillis();
+        }
+        Contact checkWho = Contacts.findById(contacts.allContacts(), who);
+        if (checkWho != null) {
+            who = checkWho.getId();
         }
         final Event newEvent = new Event().withId(++counter).
             withWhen(when).
