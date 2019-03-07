@@ -17,7 +17,8 @@
     }, {
         "id": 6,
         "name": "Hela",
-        "imgSrc": null
+        "imgSrc": null,
+        "aliases" : [ "3333" ]
     }, {
         "id": 7,
         "name": "Patrik Beran",
@@ -121,7 +122,8 @@
     }, {
         "id": 32,
         "name": "Marketa",
-        "imgSrc": null
+        "imgSrc": null,
+        "aliases": [ "999" ]
     }, {
         "id": 33,
         "name": "Verca",

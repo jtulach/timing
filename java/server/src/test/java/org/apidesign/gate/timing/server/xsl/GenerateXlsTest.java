@@ -2,12 +2,8 @@ package org.apidesign.gate.timing.server.xsl;
 
 import org.apidesign.gate.timing.server.XlsGenerator;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NavigableSet;
@@ -19,9 +15,7 @@ import org.apidesign.gate.timing.shared.Event;
 import org.apidesign.gate.timing.shared.Events;
 import org.apidesign.gate.timing.shared.Running;
 import org.apidesign.gate.timing.shared.Runs;
-import org.apidesign.gate.timing.shared.Time;
 import org.junit.Assert;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import org.junit.Before;
@@ -42,11 +36,15 @@ public class GenerateXlsTest {
 
     @Before
     public void loadEvents() throws IOException {
-        InputStream is = getClass().getResourceAsStream("pizaar.json");
+        InputStream is = eventStream();
         Assert.assertNotNull("events found", is);
         BrwsrCtx ctx = BrwsrCtx.findDefault(GenerateXlsTest.class);
         events = new TreeSet<>(Events.COMPARATOR);
         Models.parse(ctx, Event.class, is, events);
+    }
+
+    protected InputStream eventStream() {
+        return getClass().getResourceAsStream("pizaar.json");
     }
 
     @Test

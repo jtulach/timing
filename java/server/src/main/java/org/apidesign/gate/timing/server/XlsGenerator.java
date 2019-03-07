@@ -17,6 +17,7 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.apidesign.gate.timing.shared.Contact;
+import org.apidesign.gate.timing.shared.Contacts;
 import org.apidesign.gate.timing.shared.Run;
 import org.apidesign.gate.timing.shared.Running;
 import org.apidesign.gate.timing.shared.Time;
@@ -44,7 +45,12 @@ public final class XlsGenerator {
                 continue;
             }
 
-            final int whoId = r.getWho();
+            int whoId = r.getWho();
+            Contact c = Contacts.findById(contacts, whoId);
+            if (c != null) {
+                whoId = c.getId();
+            }
+
             List<Long> times = idToTimes.get(whoId);
             if (times == null) {
                 times = new ArrayList<>();
