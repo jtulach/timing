@@ -47,9 +47,7 @@
 
                             <button class="pure-button pure-hidden-xs" data-bind="click: $root.contactSelected"><span>Vybrat</span></button>
                             <button class="pure-button pure-hidden-xs" data-bind="click: $root.editContact"><span>Upravit</span></button>
-                            <!--
-                            <button class="pure-button pure-hidden-xs" data-bind="click: $root.deleteContact"><span>Smazat</span></button>
-                            -->
+                            <button class="pure-button pure-hidden-xs" data-bind="click: $root.contactConnect, visible: $root.showConnect"><span>Propojit</span></button>
                         </div>
                     </div>
                     <div class="pure-hidden-sm pure-hidden-lg pure-hidden-md pure-hidden-xl pure-u-1-5">
@@ -131,6 +129,10 @@
                     <div class="pure-control-group">
                         <label for="last-name">Obrázek</label>
                         <input class="pure-input-1-2" id="last-name" type="text" placeholder="http://wiki.apidesign.org/images/b/b7/Tulach.png" data-bind="textInput: imgSrc" required>
+                    </div>
+                    <div class="pure-control-group" data-bind="foreach: aliases">
+                        <label for="last-name">Spojeno</label>
+                        <input class="pure-input-1-2" id="first-name" type="text" data-bind="textInput: $data" disabled>
                     </div>
                     <div class="pure-controls">
                         <button  class="pure-button pure-button-primary" data-bind="click: $root.commit">OK</button>

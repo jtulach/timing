@@ -20,6 +20,7 @@ import org.apidesign.gate.timing.shared.Running;
 import org.apidesign.gate.timing.shared.Runs;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import org.junit.Test;
@@ -61,6 +62,34 @@ public class UIModelTest {
         Contact c = new Contact();
         UIModel.editContact(model, c);
         assertEquals("c is now edited", model.getEdited(), c);
+    }
+
+    @Test public void nextOnStartAndContactsBehavior() {
+        UI model = new UI();
+        model.initialize("nourl");
+        Contact jarda = new Contact().withId(1).withName("Jarouš");
+        Contact ondra = new Contact().withId(2).withName("Ondra");
+        model.getContacts().add(jarda);
+        model.getContacts().add(ondra);
+
+        model.selectNextOnStart(1798765010);
+
+        final Contact unknownOnStart = model.getNextOnStart().getContact();
+        assertNotNull("1798765010 is on start", unknownOnStart);
+        assertEquals("Id is correct", 1798765010, unknownOnStart.getId());
+        assertEquals("Name is like Id", "1798765010", unknownOnStart.getName());
+        assertFalse("The contact isn't known yet", model.getContacts().contains(unknownOnStart));
+
+        UIModel.chooseContact(model, model.getNextOnStart());
+
+        assertEquals("Choosing next", model.getNextOnStart(), model.getChoose());
+        assertTrue("Showing selection", model.isShowContacts());
+        assertTrue("Showing connect button", model.isShowConnect());
+
+        UIModel.contactConnect(model, ondra);
+
+        assertTrue("Ondra has alias: " + ondra, ondra.getAliases().contains("1798765010"));
+        assertEquals("Ondra is selected", ondra, model.getNextOnStart().getContact());
     }
 
     @Test

@@ -49,6 +49,11 @@ final class UIModel {
     }
 
     @ComputedProperty
+    static boolean showConnect(List<Contact> contacts, Avatar choose) {
+        return choose != null && !contacts.contains(choose.getContact());
+    }
+
+    @ComputedProperty
     static String resultUrl(String url) {
         return url + "/výsledky.xlsx";
     }
@@ -116,6 +121,18 @@ final class UIModel {
     }
 
     @Function
+    static void contactConnect(UI model, Contact data) {
+        if (model.getChoose() != null) {
+            Contact original = data.clone();
+            Contact unknownContext = model.getChoose().getContact();
+            data.getAliases().add(unknownContext.getName());
+            model.getChoose().setContact(data);
+            model.updateContact(model.getUrl(), "" + data.getId(), data, original);
+        }
+        model.setChoose(null);
+    }
+
+    @Function
     static void continueTimer(UI model, Record data) {
         Event f = data.getFinish();
         if (f != null) {
@@ -127,16 +144,19 @@ final class UIModel {
 
     @ModelOperation
     static void selectNextOnStart(UI ui, int id) {
-        if (id >= 0) {
+        Contact selected;
+        FOUND: if (id >= 0) {
             for (Contact c : ui.getContacts()) {
                 if (c.getId() == id) {
-                    ui.getNextOnStart().setContact(c);
-                    break;
+                    selected = c;
+                    break FOUND;
                 }
             }
+            selected = new Contact().withId(id).withName("" + id);
         } else {
-            ui.getNextOnStart().setContact(null);
+            selected = null;
         }
+        ui.getNextOnStart().withContact(selected);
     }
 
     //
@@ -401,18 +421,22 @@ final class UIModel {
         ui.setAlert(true);
     }
 
+    @ModelOperation
+    void initialize(UI model, String baseUrl) {
+        model.setUrl(baseUrl);
+        model.setEdited(null);
+        model.setSelected(null);
+        model.setChoose(null);
+        model.setConfig(null);
+    }
+
     private static UI uiModel;
     /**
      * Called when the page is ready.
      */
     static void onPageLoad() throws Exception {
         uiModel = new UI();
-        final String baseUrl = "http://localhost:8080/timing/";
-        uiModel.setUrl(baseUrl);
-        uiModel.setEdited(null);
-        uiModel.setSelected(null);
-        uiModel.setChoose(null);
-        uiModel.setConfig(null);
+        uiModel.initialize("http://localhost:8080/timing/");
         uiModel.applyBindings();
         uiModel.connect();
         uiModel.getCurrent().start();
