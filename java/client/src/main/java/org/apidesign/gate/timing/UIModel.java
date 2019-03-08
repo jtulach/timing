@@ -165,7 +165,7 @@ final class UIModel {
     static void loadRuns(UI ui, Running runs, Connection conn) {
         List<Record> oldRecords = ui.getRecords();
         List<Record> newRecords = Models.asList();
-        int currentId = 0;
+        int currentId = Integer.MAX_VALUE;
         List<Contact> used = Models.asList();
         for (Run run : runs.getRuns()) {
             Record record = new Record().withCurrent(ui.getCurrent()).withRun(run);
