@@ -95,12 +95,13 @@ public class TimingResourceTest {
         assertEquals("test", all.get(0).getName());
         int expectedId = all.get(0).getId();
 
-        WebResource add = client.resource(baseUri.resolve("add")).queryParam("type", "ASSIGN").queryParam("when", "" + when).queryParam("who", "9999").queryParam("ref", "-1");
+        WebResource add = client.resource(baseUri.resolve("add")).queryParam("type", "ASSIGN").queryParam("when", "" + when).queryParam("who", "9999");
         Event addedEvent = add.accept(MediaType.APPLICATION_JSON_TYPE).get(Event.class);
         assertNotNull(addedEvent);
         assertEquals(when, addedEvent.getWhen());
         assertEquals(Events.ASSIGN, addedEvent.getType());
         assertEquals("The event ID has been resolved", expectedId, addedEvent.getWho());
+        assertEquals("By default ref is -1", -1, addedEvent.getRef());
 
         WebResource resource = client.resource(baseUri);
         List<Event> list = resource.get(new GenericType<List<Event>>() {});

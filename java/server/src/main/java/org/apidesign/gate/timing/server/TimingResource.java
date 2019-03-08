@@ -196,7 +196,7 @@ public final class TimingResource {
         @QueryParam("type") Events type,
         @QueryParam("when") long when,
         @QueryParam("who") int who,
-        @QueryParam("ref") int ref
+        @QueryParam("ref") @DefaultValue("-1") int ref
     ) {
         if (when <= 0) {
             when = System.currentTimeMillis();
