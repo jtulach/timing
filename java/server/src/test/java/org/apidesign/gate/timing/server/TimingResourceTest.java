@@ -73,7 +73,7 @@ public class TimingResourceTest {
         Client client = new Client();
         long when = System.currentTimeMillis() + 300;
         WebResource add = client.resource(baseUri.resolve("add")).queryParam("type", "FINISH").queryParam("when", "" + when);
-        Event addedEvent = add.get(Event.class);
+        Event addedEvent = add.accept(MediaType.APPLICATION_JSON_TYPE).get(Event.class);
         assertNotNull(addedEvent);
         assertEquals(when, addedEvent.getWhen());
         assertEquals(Events.FINISH, addedEvent.getType());
@@ -96,7 +96,7 @@ public class TimingResourceTest {
         int expectedId = all.get(0).getId();
 
         WebResource add = client.resource(baseUri.resolve("add")).queryParam("type", "ASSIGN").queryParam("when", "" + when).queryParam("who", "9999").queryParam("ref", "-1");
-        Event addedEvent = add.get(Event.class);
+        Event addedEvent = add.accept(MediaType.APPLICATION_JSON_TYPE).get(Event.class);
         assertNotNull(addedEvent);
         assertEquals(when, addedEvent.getWhen());
         assertEquals(Events.ASSIGN, addedEvent.getType());
@@ -107,6 +107,18 @@ public class TimingResourceTest {
         assertEquals("Two elements " + list, 2, list.size());
 
         assertEquals("First one is the added event", addedEvent, list.get(0));
+    }
+
+    @Test
+    public void testResolveWhosName() {
+        Client client = new Client();
+        long when = System.currentTimeMillis() + 300;
+        WebResource contact = client.resource(baseUri.resolve("contacts"));
+        contact.type(MediaType.APPLICATION_JSON_TYPE).post(new GenericType<List<Contact>>(){}, new Contact().withName("Ferda Mravenec").withAliases("9999"));
+
+        WebResource add = client.resource(baseUri.resolve("add")).queryParam("type", "ASSIGN").queryParam("when", "" + when).queryParam("who", "9999").queryParam("ref", "-1");
+        String who = add.accept(MediaType.TEXT_PLAIN_TYPE).get(String.class);
+        assertEquals("Ferda Mravenec", who);
     }
 
     @Test
@@ -121,7 +133,7 @@ public class TimingResourceTest {
             when = list.get(0).getWhen() + 100;
         }
         WebResource add = client.resource(baseUri.resolve("add")).queryParam("type", "FINISH").queryParam("when", "" + when);
-        Event addedEvent = add.get(Event.class);
+        Event addedEvent = add.accept(MediaType.APPLICATION_JSON_TYPE).get(Event.class);
         assertNotNull(addedEvent);
         assertEquals(when, addedEvent.getWhen());
         assertEquals(Events.FINISH, addedEvent.getType());
@@ -233,7 +245,7 @@ public class TimingResourceTest {
 
         long now100 = now + 100;
         WebResource add = client.resource(baseUri.resolve("add")).queryParam("type", "FINISH").queryParam("when", "" + now100);
-        Event addedEvent = add.get(Event.class);
+        Event addedEvent = add.accept(MediaType.APPLICATION_JSON_TYPE).get(Event.class);
         assertNotNull(addedEvent);
         assertEquals(now100, addedEvent.getWhen());
         assertEquals(Events.FINISH, addedEvent.getType());

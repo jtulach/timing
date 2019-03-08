@@ -21,6 +21,7 @@ import javax.inject.Singleton;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -188,9 +189,10 @@ public final class TimingResource {
         }
     }
 
-    @GET @Produces(MediaType.APPLICATION_JSON)
+    @GET @Produces({ MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN })
     @Path("add")
-    public synchronized Event addEvent(
+    public synchronized Response addEvent(
+        @HeaderParam("Accept") String accept, 
         @QueryParam("type") Events type,
         @QueryParam("when") long when,
         @QueryParam("who") int who,
@@ -199,9 +201,13 @@ public final class TimingResource {
         if (when <= 0) {
             when = System.currentTimeMillis();
         }
+        String whoName;
         Contact checkWho = Contacts.findById(contacts.allContacts(), who);
         if (checkWho != null) {
             who = checkWho.getId();
+            whoName = checkWho.getName();
+        } else {
+            whoName = "" + who;
         }
         final Event newEvent = new Event().withId(++counter).
             withWhen(when).
@@ -212,7 +218,10 @@ public final class TimingResource {
         storage.scheduleStore(settings.getName(), Event.class, events);
         Running changed = updateRunsAndReturnChanged();
         handleAwaiting(when, changed);
-        return newEvent;
+        if (MediaType.TEXT_PLAIN.equals(accept)) {
+            return Response.ok(whoName).type(MediaType.TEXT_PLAIN_TYPE).build();
+        }
+        return Response.ok(newEvent).type(MediaType.APPLICATION_JSON_TYPE).build();
     }
 
     private Running updateRunsAndReturnChanged() {
