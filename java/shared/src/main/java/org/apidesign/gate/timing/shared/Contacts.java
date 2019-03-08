@@ -2,6 +2,7 @@ package org.apidesign.gate.timing.shared;
 
 import java.util.Collection;
 import net.java.html.json.ComputedProperty;
+import net.java.html.json.Function;
 import net.java.html.json.Model;
 import net.java.html.json.Property;
 
@@ -20,7 +21,12 @@ public final class Contacts {
         }
         return res;
     }
-    
+
+    @Function
+    static void unalias(Contact model, String data) {
+        model.getAliases().remove(data);
+    }
+
     public static Contact findById(Collection<Contact> contacts, int id) {
         for (Contact c : contacts) {
             if (c.getId() == id) {

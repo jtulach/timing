@@ -133,6 +133,9 @@
                     <div class="pure-control-group" data-bind="foreach: aliases">
                         <label for="last-name">Spojeno</label>
                         <input class="pure-input-1-2" id="first-name" type="text" data-bind="textInput: $data" disabled>
+                        <span class="awesome-button" data-bind="click: $parent.unalias">
+                            <i class=" fa fa-minus-circle"></i>
+                        </span>
                     </div>
                     <div class="pure-controls">
                         <button  class="pure-button pure-button-primary" data-bind="click: $root.commit">OK</button>
