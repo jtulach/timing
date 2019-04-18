@@ -28,13 +28,17 @@ public final class Contacts {
     }
 
     public static Contact findById(Collection<Contact> contacts, int id) {
+        return findById(contacts, Integer.toString(id));
+    }
+
+    public static Contact findById(Collection<Contact> contacts, String id) {
         for (Contact c : contacts) {
-            if (c.getId() == id) {
+            if (Integer.toString(c.getId()).equals(id)) {
                 return c;
             }
         }
         for (Contact c : contacts) {
-            if (c.getAliases().contains("" + id)) {
+            if (c.getAliases().contains(id)) {
                 return c;
             }
         }

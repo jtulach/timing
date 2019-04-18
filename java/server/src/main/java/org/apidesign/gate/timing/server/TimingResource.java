@@ -195,7 +195,7 @@ public final class TimingResource {
         @HeaderParam("Accept") String accept, 
         @QueryParam("type") Events type,
         @QueryParam("when") long when,
-        @QueryParam("who") int who,
+        @QueryParam("who") String who,
         @QueryParam("ref") @DefaultValue("-1") int ref
     ) {
         if (when <= 0) {
@@ -203,16 +203,26 @@ public final class TimingResource {
         }
         String whoName;
         Contact checkWho = Contacts.findById(contacts.allContacts(), who);
+        int whoNum;
         if (checkWho != null) {
-            who = checkWho.getId();
+            whoNum = checkWho.getId();
             whoName = checkWho.getName();
         } else {
             whoName = "" + who;
+            if (who == null) {
+                whoNum = 0;
+            } else {
+                try {
+                    whoNum = Integer.parseInt(who);
+                } catch (NumberFormatException ex) {
+                    whoNum = 0;
+                }
+            }
         }
         final Event newEvent = new Event().withId(++counter).
             withWhen(when).
             withRef(ref).
-            withWho(who).
+            withWho(whoNum).
             withType(type);
         events.add(newEvent);
         storage.scheduleStore(settings.getName(), Event.class, events);

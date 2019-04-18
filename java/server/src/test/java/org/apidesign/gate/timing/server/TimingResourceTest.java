@@ -111,6 +111,18 @@ public class TimingResourceTest {
     }
 
     @Test
+    public void testResolveHexaDigitsWhosName() {
+        Client client = new Client();
+        long when = System.currentTimeMillis() + 300;
+        WebResource contact = client.resource(baseUri.resolve("contacts"));
+        contact.type(MediaType.APPLICATION_JSON_TYPE).post(new GenericType<List<Contact>>(){}, new Contact().withName("Ferda Mravenec").withAliases("F5734324324321432"));
+
+        WebResource add = client.resource(baseUri.resolve("add")).queryParam("type", "ASSIGN").queryParam("when", "" + when).queryParam("who", "F5734324324321432").queryParam("ref", "-1");
+        String who = add.accept(MediaType.TEXT_PLAIN_TYPE).get(String.class);
+        assertEquals("Ferda Mravenec", who);
+    }
+
+    @Test
     public void testResolveWhosName() {
         Client client = new Client();
         long when = System.currentTimeMillis() + 300;
