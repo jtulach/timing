@@ -188,7 +188,7 @@ final class UIModel {
         ui.selectNextOnStart(runs.getStarting());
         long since = System.currentTimeMillis() - latest;
         long sinceHours = since / (3600L * 1000);
-        if (sinceHours > 4) {
+        if (sinceHours > 4 && runs.getRuns().size() > 4) {
             ui.setMessage("Žádná jízda za posledních " + sinceHours + " hodin.");
             setup(ui);
         } else {
