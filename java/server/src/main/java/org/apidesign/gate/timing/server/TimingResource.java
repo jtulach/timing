@@ -215,7 +215,7 @@ public final class TimingResource {
                 try {
                     whoNum = Integer.parseInt(who);
                 } catch (NumberFormatException ex) {
-                    whoNum = 0;
+                    whoNum = who.hashCode();
                 }
             }
         }

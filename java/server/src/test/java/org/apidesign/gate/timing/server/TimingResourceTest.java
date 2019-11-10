@@ -24,6 +24,7 @@ import org.apidesign.gate.timing.shared.Settings;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.junit.After;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -120,6 +121,26 @@ public class TimingResourceTest {
         WebResource add = client.resource(baseUri.resolve("add")).queryParam("type", "ASSIGN").queryParam("when", "" + when).queryParam("who", "F5734324324321432").queryParam("ref", "-1");
         String who = add.accept(MediaType.TEXT_PLAIN_TYPE).get(String.class);
         assertEquals("Ferda Mravenec", who);
+    }
+
+    @Test
+    public void testDeliverDigitsWhosName() {
+        Client client = new Client();
+        long when = System.currentTimeMillis() + 300;
+
+        WebResource add = client.resource(baseUri.resolve("add")).queryParam("type", "ASSIGN").queryParam("when", "" + when).queryParam("who", "F5734324324321432").queryParam("ref", "-1");
+        String who = add.accept(MediaType.TEXT_PLAIN_TYPE).get(String.class);
+
+        assertEquals("Unknown ID", "F5734324324321432", who);
+
+        WebResource resource = client.resource(baseUri);
+        List<Event> list = resource.get(new GenericType<List<Event>>() {});
+        assertEquals("Two elements " + list, 2, list.size());
+
+        Event assign = list.get(0);
+
+        assertEquals(Events.ASSIGN, assign.getType());
+        assertNotEquals("ID is different than zero: " + assign, 0, assign.getWho());
     }
 
     @Test
