@@ -156,28 +156,29 @@
             <form id="contact-form" class="pure-form pure-form-aligned">
                 <fieldset>
                     <div class="pure-control-group">
-                        <label for="first-name">Měření</label>
-                        <input class="pure-input-1-2" type="text" placeholder="Trénink" data-bind="textInput: name" required>
+                        <label for="set-name">Měření</label>
+                        <input id="set-name" class="pure-input-1-2" type="text" placeholder="Trénink" data-bind="textInput: name" required>
                     </div>
                     <div class="pure-control-group">
-                        <label for="first-name">Výsledky</label>
-                        <a class="pure-input-1-2" href="#" data-bind="attr: { 'href' : $root.resultUrl }">výsledky.xlsx</a>
+                        <label for="set-res">Výsledky</label>
+                        <a id="set-res" class="pure-input-1-2" href="#" data-bind="attr: { 'href' : $root.resultUrl }">tabulka.xlsx</a>
                     </div>
                     <div class="pure-control-group">
-                        <label for="first-name">Datum</label>
-                        <input class="pure-input-1-2" type="date" placeholder="Dnes" data-bind="textInput: date" required>
+                        <label for="set-date">Datum</label>
+                        <input id="set-date" class="pure-input-1-2" type="date" placeholder="Dnes" data-bind="textInput: date" required>
                     </div>
                     <div class="pure-control-group">
-                        <label for="last-name">Minimum</label>
-                        <input class="pure-input-1-2" type="text" placeholder="-20% či 40s" data-bind="textInput: min" required>
+                        <label for="set-min">Minimum</label>
+                        <input id="set-min" class="pure-input-1-2" type="text" placeholder="-20% či 40s" data-bind="textInput: min" required>
                     </div>
                     <div class="pure-control-group">
-                        <label for="last-name">Maximum</label>
-                        <input class="pure-input-1-2" type="text" placeholder="₊20% či 70s" data-bind="textInput: max" required>
+                        <label for="set-max">Maximum</label>
+                        <input id="set-max" class="pure-input-1-2" type="text" placeholder="+20% či 70s" data-bind="textInput: max" required>
                     </div>
                     <div class="pure-control-group">
-                        <label for="last-name">Server</label>
-                        <input class="pure-input-1-2" type="text" placeholder="₊20% či 70s" data-bind="textInput: url" required>
+                        <label for="set-server">Server</label>
+                        <input id="set-server" class="pure-input-1-2" type="text" placeholder="http://skimb.xelfi.cz/timing" data-bind="textInput: url" required>
+                        <a class="pure-input-1-2" href="#" data-bind="attr : { href : url }" target="_blank">události</a>
                     </div>
                     <div class="pure-controls">
                         <button  class="pure-button pure-button-primary" data-bind="click: $root.commit">OK</button>
