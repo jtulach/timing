@@ -14,7 +14,10 @@
             <a class="pure-menu-heading" href="#" data-bind="click: $root.cancel"><span class="heading-text" data-bind="with: settings">
                     <span>Měř!</span>
             </span></a>
-            <a class="pure-menu-item" href="#" data-bind="click: $root.connect"><span class="heading-text">Obnovit</span></a>
+            <a class="pure-menu-item" href="#" data-bind="click: $root.connect">
+                <span class="pure-visible">&#x21bb;</span>
+                <span class="pure-hidden-xs pure-visible">Obnovit</span>
+            </a>
             <ul class="pure-menu-list">
                 <li class="pure-menu-item pure-menu-has-children pure-menu-allow-hover">
                     <a href="#" class="pure-menu-link" data-bind="text: name">Časomíra</a>
@@ -23,8 +26,10 @@
                     </ul>
                 </li>
             </ul>
-            <a class="pure-menu-item" href="#" data-bind="attr: { 'href' : $root.resultUrl }"><span class="heading-text">výsledky.xlsx</span></a>
-            <a class="pure-menu-item" href="#" data-bind="click: $root.setup"><span class="heading-text">Nastavení</span></a>
+            <a class="pure-menu-item" href="#" data-bind="click: $root.setup">
+                <span class="pure-visible">&#x2699;</span>
+                <span class="pure-hidden-xs pure-visible">Nastavení</span>
+            </a>
         </div>
         <div data-bind="visible: alert" id="alert">
             <a href="#alert" data-bind="text: message, click: hideAlert, css: {alert: alert}"></a>
@@ -155,6 +160,10 @@
                     <div class="pure-control-group">
                         <label for="first-name">Měření</label>
                         <input class="pure-input-1-2" type="text" placeholder="Trénink" data-bind="textInput: name" required>
+                    </div>
+                    <div class="pure-control-group">
+                        <label for="first-name">Výsledky</label>
+                        <a class="pure-input-1-2" href="#" data-bind="attr: { 'href' : $root.resultUrl }">výsledky.xlsx</a>
                     </div>
                     <div class="pure-control-group">
                         <label for="first-name">Datum</label>
