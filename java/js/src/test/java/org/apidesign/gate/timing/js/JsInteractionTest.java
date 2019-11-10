@@ -14,18 +14,5 @@ import org.junit.runner.RunWith;
 @RunWith(BrowserRunner.class)
 public class JsInteractionTest {
     @Test public void testCallbackFromJavaScript() throws Exception {
-        class R implements Runnable {
-            int called;
-
-            @Override
-            public void run() {
-                called++;
-            }
-        }
-        R callback = new R();
-        
-        Dialogs.confirm("Hello", callback);
-        
-        assertEquals("One immediate callback", callback.called, 1);
     }
   }
