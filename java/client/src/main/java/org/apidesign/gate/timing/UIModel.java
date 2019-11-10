@@ -1,6 +1,5 @@
 package org.apidesign.gate.timing;
 
-import org.apidesign.gate.timing.js.Dialogs;
 import org.apidesign.gate.timing.shared.Contact;
 import org.apidesign.gate.timing.shared.Event;
 import java.util.List;
@@ -179,7 +178,7 @@ final class UIModel {
                 newRecords.add(record);
             }
         }
-        markFirstFinished(newRecords);
+        long latest = markFirstFinished(newRecords);
         final Record[] result = newRecords.toArray(new Record[newRecords.size()]);
         ui.withRecords(result);
         Settings s = runs.getSettings();
@@ -187,7 +186,14 @@ final class UIModel {
             ui.withSettings(s);
         }
         ui.selectNextOnStart(runs.getStarting());
-        ui.setMessage("Máme tu " + result.length + " jízd.");
+        long since = System.currentTimeMillis() - latest;
+        long sinceHours = since / (3600L * 1000);
+        if (sinceHours > 4) {
+            ui.setMessage("Žádná jízda za posledních " + sinceHours + " hodin.");
+            setup(ui);
+        } else {
+            ui.setMessage("Máme tu " + result.length + " jízd.");
+        }
 
         List<Contact> newOrder = Models.asList();
         newOrder.addAll(ui.getContacts());
@@ -217,9 +223,16 @@ final class UIModel {
         used.add(0, contact);
     }
 
-    static void markFirstFinished(List<Record> newRecords) {
+    static long markFirstFinished(List<Record> newRecords) {
+        long latest = 0;
         boolean foundFirst = false;
         for (Record record : newRecords) {
+            if (record.getStart() != null && record.getStart().getWhen() > latest) {
+                latest = record.getStart().getWhen();
+            }
+            if (record.getFinish()!= null && record.getFinish().getWhen() > latest) {
+                latest = record.getFinish().getWhen();
+            }
             if (!foundFirst && record.getFinish() != null) {
                 record.setFirstFinished(true);
                 foundFirst = true;
@@ -227,6 +240,7 @@ final class UIModel {
             }
             record.setFirstFinished(false);
         }
+        return latest;
     }
 
     @OnReceive(url = "{url}/add?type={type}&ref={ref}", onError = "cannotConnect")
@@ -379,9 +393,7 @@ final class UIModel {
         if (e.getValidate() != null) {
             invalid = e.getValidate();
         }
-        if (invalid != null && !Dialogs.confirm("Not all data are valid (" +
-                invalid + "). Do you want to proceed?", null
-        )) {
+        if (invalid != null) {
             return;
         }
 
