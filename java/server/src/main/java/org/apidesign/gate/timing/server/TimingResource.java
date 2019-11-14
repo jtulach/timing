@@ -15,6 +15,8 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.NavigableSet;
 import java.util.TreeSet;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -42,6 +44,8 @@ import org.apidesign.gate.timing.shared.Runs;
 
 @Path("/timing/") @Singleton
 public final class TimingResource {
+    private static final Logger LOG = Main.LOG;
+
     private final Map<AsyncResponse,Request> awaiting = new HashMap<>();
     private final NavigableSet<Event> events = new TreeSet<>(Events.COMPARATOR);
     private Running runs = new Running();
@@ -121,6 +125,7 @@ public final class TimingResource {
     ) {
         long first = events.isEmpty() ? -1L : events.iterator().next().getWhen();
         if (first <= request.newerThan) {
+            LOG.log(Level.FINE, "allEvents awating: {0}", request.newerThan);
             awaiting.put(response, request);
             return;
         }
@@ -198,6 +203,7 @@ public final class TimingResource {
         @QueryParam("who") String who,
         @QueryParam("ref") @DefaultValue("-1") int ref
     ) {
+        LOG.log(Level.FINE, "addEvent Accept: {0} type {1} when {2} who {3} ref {4}", new Object[] { accept, type, when, who, ref });
         if (when <= 0) {
             when = System.currentTimeMillis();
         }
@@ -224,6 +230,7 @@ public final class TimingResource {
             withRef(ref).
             withWho(whoNum).
             withType(type);
+        LOG.log(Level.FINE, "  checkWho {0} event {1}", new Object[] { checkWho, newEvent });
         events.add(newEvent);
         storage.scheduleStore(settings.getName(), Event.class, events);
         Running changed = updateRunsAndReturnChanged();
@@ -300,6 +307,7 @@ public final class TimingResource {
     public Settings config(
         @QueryParam("name") String name
     ) {
+        LOG.log(Level.FINE, "admin/config {0}", name);
         Settings data = new Settings().withName(name);
         return config(data);
     }
@@ -312,6 +320,7 @@ public final class TimingResource {
         @QueryParam("name") String name,
         Settings data
     ) {
+        LOG.log(Level.FINE, "admin/config {0} = {1}", new Object[] { name, data });
         if (name != null && !name.isEmpty()) {
             data.setName(name);
         }

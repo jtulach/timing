@@ -22,6 +22,8 @@ import org.glassfish.jersey.server.ResourceConfig;
 /** Starts REST server based on Jersey.
  */
 final class Main implements ContainerResponseFilter {
+    static final Logger LOG = Logger.getLogger("org.apidesign.gate.timing.server");
+
     public static void main(String... args) throws Exception {
         int port = 8080;
         if (args.length >= 1) {
@@ -53,11 +55,16 @@ final class Main implements ContainerResponseFilter {
     }
 
     private static void turnLoggingOn() {
-        Logger l = Logger.getLogger("org.glassfish.grizzly.http.server.HttpHandler");
-        l.setLevel(Level.FINE);
-        l.setUseParentHandlers(false);
         ConsoleHandler ch = new ConsoleHandler();
         ch.setLevel(Level.ALL);
+        Logger l = Logger.getLogger("org.glassfish.grizzly.http.server.HttpHandler");
+        turnLoggingOn(l, ch);
+        turnLoggingOn(LOG, ch);
+    }
+
+    private static void turnLoggingOn(Logger l, ConsoleHandler ch) {
+        l.setLevel(Level.FINE);
+        l.setUseParentHandlers(false);
         l.addHandler(ch);
     }
 

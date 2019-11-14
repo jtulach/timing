@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -22,6 +24,7 @@ import org.apidesign.gate.timing.shared.Contact;
 
 @Singleton
 public final class ContactsResource {
+    private static final Logger LOG = Main.LOG;
     private final List<Contact> contacts = new ArrayList<>();
 
     @Inject
@@ -49,6 +52,7 @@ public final class ContactsResource {
 
     @POST @Produces(MediaType.APPLICATION_JSON)
     public synchronized List<Contact> addContact(Contact newOne) {
+        LOG.log(Level.FINE, "addContact {0}", newOne);
         contacts.add(newOne.withId(++counter));
         this.storage.scheduleStore("people", Contact.class, contacts);
         return contacts;
@@ -58,6 +62,7 @@ public final class ContactsResource {
     public synchronized List<Contact> updateContact(
         @PathParam("id") @DefaultValue("-1") int id, Contact newOne
     ) {
+        LOG.log(Level.FINE, "updateContact {0} value: {1}", new Object[]{id, newOne});
         ListIterator<Contact> it = contacts.listIterator();
         while (it.hasNext()) {
             Contact c = it.next();
@@ -72,6 +77,7 @@ public final class ContactsResource {
 
     @DELETE @Produces(MediaType.APPLICATION_JSON) @Path("{id}")
     public synchronized List<Contact> deleteContact(@PathParam("id") String id) {
+        LOG.log(Level.FINE, "deleteContact {0}", id);
         ListIterator<Contact> it = contacts.listIterator();
         while (it.hasNext()) {
             Contact c = it.next();
