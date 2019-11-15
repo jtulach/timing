@@ -125,13 +125,22 @@ public class TimingResourceTest {
 
     @Test
     public void testDeliverDigitsWhosName() {
+        deliverDigitsWhosname("F5734324324321432");
+    }
+
+    @Test
+    public void testDeliverDigitsWhosNameNegativeHash() {
+        deliverDigitsWhosname("B3857B42020416E0");
+    }
+
+    private void deliverDigitsWhosname(String id) {
         Client client = new Client();
         long when = System.currentTimeMillis() + 300;
 
-        WebResource add = client.resource(baseUri.resolve("add")).queryParam("type", "ASSIGN").queryParam("when", "" + when).queryParam("who", "F5734324324321432").queryParam("ref", "-1");
+        WebResource add = client.resource(baseUri.resolve("add")).queryParam("type", "ASSIGN").queryParam("when", "" + when).queryParam("who", id).queryParam("ref", "-1");
         String who = add.accept(MediaType.TEXT_PLAIN_TYPE).get(String.class);
 
-        assertEquals("Unknown ID", "F5734324324321432", who);
+        assertEquals("Unknown ID", id, who);
 
         WebResource resource = client.resource(baseUri);
         List<Event> list = resource.get(new GenericType<List<Event>>() {});
@@ -141,6 +150,7 @@ public class TimingResourceTest {
 
         assertEquals(Events.ASSIGN, assign.getType());
         assertNotEquals("ID is different than zero: " + assign, 0, assign.getWho());
+        assertTrue("Bigger than zero: " + assign, assign.getWho() > 0);
     }
 
     @Test
