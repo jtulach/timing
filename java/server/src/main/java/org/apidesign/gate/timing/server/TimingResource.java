@@ -221,10 +221,7 @@ public final class TimingResource {
                 try {
                     whoNum = Integer.parseInt(who);
                 } catch (NumberFormatException ex) {
-                    whoNum = Math.abs(who.hashCode());
-                    if (whoNum == 0) {
-                        whoNum = Integer.MAX_VALUE;
-                    }
+                    whoNum = Math.abs(who.hashCode()) | 0x7f000000;
                     contacts.pendingAliases(whoNum, who);
                 }
             }
