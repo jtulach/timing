@@ -2,8 +2,10 @@ package org.apidesign.gate.timing.server;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.PostConstruct;
@@ -26,6 +28,7 @@ import org.apidesign.gate.timing.shared.Contact;
 public final class ContactsResource {
     private static final Logger LOG = Main.LOG;
     private final List<Contact> contacts = new ArrayList<>();
+    private Map<Integer,String> pendingAliases = new HashMap<>();
 
     @Inject
     private Storage storage;
@@ -63,6 +66,19 @@ public final class ContactsResource {
         @PathParam("id") @DefaultValue("-1") int id, Contact newOne
     ) {
         LOG.log(Level.FINE, "updateContact {0} value: {1}", new Object[]{id, newOne});
+        ListIterator<String> alIt = newOne.getAliases().listIterator();
+        while (alIt.hasNext()) {
+            String a = alIt.next();
+            try {
+                int hashCode = Integer.parseInt(a);
+                String realName = pendingAliases.remove(hashCode);
+                if (realName != null) {
+                    alIt.set(realName);
+                }
+            } catch (NumberFormatException ex) {
+                // OK
+            }
+        }
         ListIterator<Contact> it = contacts.listIterator();
         while (it.hasNext()) {
             Contact c = it.next();
@@ -88,6 +104,10 @@ public final class ContactsResource {
             }
         }
         throw new WebApplicationException(Response.Status.NOT_FOUND);
+    }
+
+    void pendingAliases(int whoNum, String who) {
+        pendingAliases.put(whoNum, who);
     }
 
 }

@@ -225,6 +225,7 @@ public final class TimingResource {
                     if (whoNum == 0) {
                         whoNum = Integer.MAX_VALUE;
                     }
+                    contacts.pendingAliases(whoNum, who);
                 }
             }
         }

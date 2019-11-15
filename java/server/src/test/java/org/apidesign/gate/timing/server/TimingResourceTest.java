@@ -135,6 +135,11 @@ public class TimingResourceTest {
 
     private void deliverDigitsWhosname(String id) {
         Client client = new Client();
+        WebResource contact = client.resource(baseUri.resolve("contacts"));
+        final GenericType<List<Contact>> contactsType = new GenericType<List<Contact>>(){};
+
+        final Contact ferda = contact.type(MediaType.APPLICATION_JSON_TYPE).post(contactsType, new Contact().withName("Ferda Mravenec")).get(0);
+
         long when = System.currentTimeMillis() + 300;
 
         WebResource add = client.resource(baseUri.resolve("add")).queryParam("type", "ASSIGN").queryParam("when", "" + when).queryParam("who", id).queryParam("ref", "-1");
@@ -143,14 +148,34 @@ public class TimingResourceTest {
         assertEquals("Unknown ID", id, who);
 
         WebResource resource = client.resource(baseUri);
-        List<Event> list = resource.get(new GenericType<List<Event>>() {});
-        assertEquals("Two elements " + list, 2, list.size());
+        final GenericType<List<Event>> eventListType = new GenericType<List<Event>>() {};
+        List<Event> twoEvents = resource.get(eventListType);
+        assertEquals("Two elements " + twoEvents, 2, twoEvents.size());
 
-        Event assign = list.get(0);
+        Event assignUnknown = twoEvents.get(0);
 
-        assertEquals(Events.ASSIGN, assign.getType());
-        assertNotEquals("ID is different than zero: " + assign, 0, assign.getWho());
-        assertTrue("Bigger than zero: " + assign, assign.getWho() > 0);
+        assertEquals(Events.ASSIGN, assignUnknown.getType());
+        assertNotEquals("ID is different than zero: " + assignUnknown, 0, assignUnknown.getWho());
+        assertTrue("Bigger than zero: " + assignUnknown, assignUnknown.getWho() > 0);
+
+        contact.path("" + ferda.getId()).type(MediaType.APPLICATION_JSON_TYPE).put(contactsType, ferda.clone().withAliases("" + assignUnknown.getWho()));
+        List<Contact> updateContacts = contact.type(MediaType.APPLICATION_JSON_TYPE).get(contactsType);
+        assertEquals("One", 1, updateContacts.size());
+        assertEquals("Ferda Mravenec", updateContacts.get(0).getName());
+        List<String> aliases = updateContacts.get(0).getAliases();
+        assertTrue("Aliases contains ID: " + aliases, aliases.contains(id));
+
+        WebResource select = client.resource(baseUri.resolve("add")).queryParam("type", "ASSIGN").queryParam("when", "" + when).queryParam("who", id).queryParam("ref", "-1");
+        String ferdaSelected = select.accept(MediaType.TEXT_PLAIN_TYPE).get(String.class);
+
+        assertEquals("Ferda Mravenec", ferdaSelected);
+
+        List<Event> threeEvents = resource.get(eventListType);
+        assertEquals("Three elements " + threeEvents, 3, threeEvents.size());
+
+        Event assignFerda = threeEvents.get(0);
+        assertEquals(Events.ASSIGN, assignFerda.getType());
+        assertEquals("It's Ferda's ID: ", ferda.getId(), assignFerda.getWho());
     }
 
     @Test
