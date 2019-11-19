@@ -22,7 +22,7 @@ unsigned long ledChange = 0;
 unsigned long timeSignalCheck = 0;
 #define TIME_SIGNAL_CHECK 10000
 
-Phone phone;
+Phone *phone;
 
 char cmd[150];
 unsigned long lastTimeMessageSend = 0; // when the last start message was send 
@@ -31,7 +31,8 @@ void setup() {
   Serial.begin(9600);
   led.setColor(250, 40, 0);
   led.on();
-  phone.init();
+  phone = new Phone(NULL);
+  phone->init();
 }
 
 void loop() {
@@ -46,15 +47,15 @@ void loop() {
     unsigned long current = millis();
     if ((current - switchTime) > lastTimeMessageSend) {
       DEBUG_PRINTLN(F("Sending start time"));
-      unsigned long seconds = 0;
+      unsigned long seconds = 10;
       unsigned long milliSeconds = 0;
-      phone.getCurrentUnixTimeStamp(&seconds, &milliSeconds);
+      phone->getCurrentUnixTimeStamp(&seconds, &milliSeconds);
       int size = sprintf(cmd, "http://skimb.xelfi.cz/timing/add?when=%ld%d&type=START", seconds, milliSeconds);
       lastTimeMessageSend = current;
       DEBUG_PRINTLN(cmd);
       led.setColor(0, 0, 250);
       led.on();
-      phone.sendRequest(cmd);
+      phone->sendRequest(cmd);
       led.setColor(250, 0, 0);
       delay(BREAK_AFTER_SENDING);
       timeSignalCheck = 0;
@@ -72,7 +73,7 @@ void loop() {
 }
 
 void checkSignalStrength() {
-  int strength = phone.signalStrength();
+  int strength = phone->signalStrength();
   if (strength < 10) {
     led.setColor(255, 0, 0);  // red
   } else if (strength > 9 && strength < 15) {
@@ -83,4 +84,3 @@ void checkSignalStrength() {
     led.setColor(0, 250, 0);
   }
 }
-
