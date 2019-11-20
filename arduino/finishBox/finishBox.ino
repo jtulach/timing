@@ -20,7 +20,7 @@ unsigned long timeSignalCheck = 0;
 int workingResistorValue = 600;
 int minimalMessageDelay = 2; // number of seconds, when the message can not be sand again
 
-Phone phone;
+Phone *phone;
 
 char cmd[150];
 unsigned long lastTimeMessageSend = 0; // when the last start message was send
@@ -33,7 +33,15 @@ void setup() {
   Serial.begin(9600);
   led.setColor(250, 40, 0);
   led.on();
-  phone.init();
+  phone = new Phone(NULL);
+  phone->init();
+  // sending message about starting box
+  DEBUG_PRINTLN(F("Sending FINISHBOX_STARTED"));
+  unsigned long seconds = 0;
+  unsigned long milliSeconds = 0;
+  phone->getCurrentUnixTimeStamp(&seconds, &milliSeconds);
+  sprintf(cmd, "http://skimb.xelfi.cz/timing/add?when=%ld%03d&type=FINISHBOX_STARTED", seconds, milliSeconds);
+  phone->sendRequest(cmd);
 }
 
 void loop() {
@@ -63,12 +71,12 @@ void loop() {
         unsigned long milliSeconds = 0;
         current = millis();
         DEBUG_PRINTLN(F("Sending finish time"));
-        phone.getCurrentUnixTimeStamp(&seconds, &milliSeconds);
-        int size = sprintf(cmd, "http://skimb.xelfi.cz/timing/add?when=%ld%d&type=FINISH", seconds, milliSeconds);
+        phone->getCurrentUnixTimeStamp(&seconds, &milliSeconds);
+        int size = sprintf(cmd, "http://skimb.xelfi.cz/timing/add?when=%ld%03d&type=FINISH", seconds, milliSeconds);
         lastMessageTime = current;
         led.setColor(0, 0, 250);
         led.on();
-        phone.sendRequest(cmd);
+        phone->sendRequest(cmd);
         timeSignalCheck = 0;
         lastMessageTime = current;
       }
@@ -102,7 +110,7 @@ int getResistorValue() {
 }
 
 void checkSignalStrength() {
-  int strength = phone.signalStrength();
+  int strength = phone->signalStrength();
   if (strength < 10) {
     led.setColor(255, 0, 0);  // red
   } else if (strength > 9 && strength < 15) {

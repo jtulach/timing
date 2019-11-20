@@ -26,23 +26,15 @@ Phone::Phone(LiquidCrystal_I2C *d) {
 }
 
 const char AtCLTS[] PROGMEM = "AT+CLTS=1";
-//const char AtCCLK[] PROGMEM = "AT+CCLK?";
-//const char AtSAPBR1[] PROGMEM = "AT+SAPBR=3,1,\"CONTYPE\",\"GPRS\"";
-//const char AtSAPBR2[] PROGMEM = "AT+SAPBR=3,1,\"APN\",\"internet\"";
-//const char AtSAPBR3[] PROGMEM = "AT+SAPBR=1,1";
-//const char AtCSQ[] PROGMEM = "AT+CSQ";
-//const char AtCGATT[] PROGMEM = "AT+CGATT?";
-//const char AtHTTPINIT[] PROGMEM = "AT+HTTPINIT";
-//const char AtHTTPREAD[] PROGMEM = "AT+HTTPREAD";
-//const char AtHTTACTION[] PROGMEM = "AT+HTTPACTION=%d";
-//const char AtHTTPPARA[] PROGMEM = "AT+HTTPPARA=\"URL\",\"%s\"";
 
 const char NORMAL_POWER_DOWN[] PROGMEM = "NORMAL POWER DOWN";
 
 void Phone::init() {
   DEBUG_PRINTLN(F("Phone init ...."));
   printLCD(0, 2, F("Inicializace GSM...  "));
-  DEBUG_PRINTLN(F("nal lcd vytisteno"));
+  if (lcd) {
+    DEBUG_PRINTLN(F("na lcd vytisteno"));
+  }
   switchOn();
   DEBUG_PRINTLN(F("phone switched on"));
   atCommand2(F("AT+CLTS=1"));
@@ -55,18 +47,20 @@ void Phone::init() {
   atCommand2(F("AT+HTTPINIT"));
   printLCD(0, 3, F("Synchronizace casu  "));
   synchronizeTime();
-  if (isStarted) {
+//  if (isStarted) {
     // sending log message, that the phone was restarted. 
-    char cmd[150];
-    unsigned long seconds = 0;
-    unsigned long milliSeconds = 0;
-    getCurrentUnixTimeStamp(&seconds, &milliSeconds);
+//    char cmd[150];
+//    unsigned long seconds = 0;
+//    unsigned long milliSeconds = 0;
+//    getCurrentUnixTimeStamp(&seconds, &milliSeconds);
     //int size = sprintf(cmd, "http://skimb.xelfi.cz/timing/add?when=%ld%d&type=PHONE_RESET", seconds, milliSeconds);
     //printLCD(0, 3, F("Sending PHONE_RESET"));
     //sendRequest(cmd); 
-  }
+//  }
   isStarted = false;
-  lcd->clear();
+  if (lcd) {
+    lcd->clear();
+  }
 }
 
 /*
