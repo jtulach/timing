@@ -36,11 +36,12 @@ void setup() {
   phone = new Phone(NULL);
   phone->init();
   // sending message about starting box
-  DEBUG_PRINTLN(F("Sending FINISHBOX_STARTED"));
+  DEBUG_PRINTLN(F("Sending FINISH_INITIALIZED"));
   unsigned long seconds = 0;
   unsigned long milliSeconds = 0;
   phone->getCurrentUnixTimeStamp(&seconds, &milliSeconds);
-  sprintf(cmd, "http://skimb.xelfi.cz/timing/add?when=%ld%03d&type=FINISHBOX_STARTED", seconds, milliSeconds);
+//  phone->createRequest(cmd, &seconds, &milliSeconds, F("FINISH_INITIALIZED"));
+  sprintf(cmd, "http://skimb.xelfi.cz/timing/add?when=%ld%03d&type=FINISH_INITIALIZED", seconds, milliSeconds);
   phone->sendRequest(cmd);
 }
 
@@ -72,6 +73,7 @@ void loop() {
         current = millis();
         DEBUG_PRINTLN(F("Sending finish time"));
         phone->getCurrentUnixTimeStamp(&seconds, &milliSeconds);
+//        int size = phone->createRequest(cmd, seconds, milliSeconds, F("FINISH"));
         int size = sprintf(cmd, "http://skimb.xelfi.cz/timing/add?when=%ld%03d&type=FINISH", seconds, milliSeconds);
         lastMessageTime = current;
         led.setColor(0, 0, 250);

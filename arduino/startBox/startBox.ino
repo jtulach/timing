@@ -104,7 +104,7 @@ void setup() {
   unsigned long seconds = 0;
   unsigned long milliSeconds = 0;
   phone->getCurrentUnixTimeStamp(&seconds, &milliSeconds);
-  sprintf_P(cmd, PSTR("http://skimb.xelfi.cz/timing/add?when=%ld%03d&type=STARTBOX_STARTED"), seconds, milliSeconds);
+  sprintf_P(cmd, PSTR("http://skimb.xelfi.cz/timing/add?when=%ld%03d&type=START_INITIALIZED"), seconds, milliSeconds);
   DEBUG_PRINTLN(cmd);
   phone->sendRequest(cmd);
 }
@@ -144,6 +144,7 @@ void checkStart() {
       lcd->setCursor(0, 1);
       lcd->print(F("Odstartovano"));
       playStartMelody();
+//      phone->createRequest(cmd, seconds, milliSeconds, F("START"));
       sprintf_P(cmd, PSTR("http://skimb.xelfi.cz/timing/add?when=%ld%03d&type=START"), seconds, milliSeconds);
       lastTimeMessageSend = current;
       DEBUG_PRINTLN(cmd);
@@ -243,7 +244,9 @@ bool checkCardReader() {
   id += (unsigned long)uid[6] << 8;
   id += (unsigned long)uid[7];
   DEBUG_PRINTLN(id);
-  sprintf_P(cmd, PSTR("http://skimb.xelfi.cz/timing/add?who=%s&when=%ld%03d&type=ASSIGN"), lastStartId, seconds, milliSeconds);
+//  phone->createRequest(cmd, seconds, milliSeconds, F("ASSIGN"));
+//  sprintf_P(cmd, PSTR("%s&who=%s"), cmd, lastStartId);
+  sprintf_P(cmd, PSTR("http://skimb.xelfi.cz/timing/add?who='%s'&when=%ld%03d&type=ASSIGN"), lastStartId, seconds, milliSeconds);
   DEBUG_PRINTLN(cmd);
   lcd->setCursor(0, 3);
   lcd->print(F("Posilani na server"));
