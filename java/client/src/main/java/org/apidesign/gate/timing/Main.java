@@ -7,10 +7,11 @@ public final class Main {
     }
 
     public static void main(String... args) throws Exception {
+        String page = args.length > 0 ? args[0] : "start.html";
         BrowserBuilder.newBrowser().
-            loadPage("pages/index.html").
+            loadPage("pages/" + page).
             loadClass(Main.class).
-            invoke("onPageLoad", args).
+            invoke("onPageLoad").
             showAndWait();
         System.exit(0);
     }

@@ -85,7 +85,7 @@
                 <configuration>
                     <obfuscation>${bck2brwsr.obfuscationlevel}</obfuscation>
                     <directory>${project.build.directory}/${project.build.finalName}-bck2brwsr/public_html/</directory>
-                    <startpage>index.html</startpage>
+                    <startpage>start.html</startpage>
                     <classPathPrefix>lib</classPathPrefix>
                     <mainJavaScript>${project.build.directory}/timing.js</mainJavaScript>
                     <exports>

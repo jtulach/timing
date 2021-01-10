@@ -47,6 +47,7 @@
           <filtered>true</filtered>
           <includes>
               <include>index.html</include>
+              <include>start.html</include>
           </includes>
       </fileSet>
         <fileSet>
