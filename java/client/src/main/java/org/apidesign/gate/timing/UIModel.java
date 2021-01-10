@@ -1,5 +1,6 @@
 package org.apidesign.gate.timing;
 
+import java.io.Closeable;
 import org.apidesign.gate.timing.shared.Contact;
 import org.apidesign.gate.timing.shared.Event;
 import java.util.List;
@@ -12,6 +13,7 @@ import net.java.html.json.Models;
 import net.java.html.json.OnPropertyChange;
 import net.java.html.json.OnReceive;
 import net.java.html.json.Property;
+import org.apidesign.gate.timing.js.TemplateRegistration;
 import org.apidesign.gate.timing.shared.Contacts;
 import org.apidesign.gate.timing.shared.Run;
 import org.apidesign.gate.timing.shared.Running;
@@ -438,6 +440,21 @@ final class UIModel {
         model.setSelected(null);
         model.setChoose(null);
         model.setConfig(null);
+    }
+
+    Closeable[] templates;
+
+    @ModelOperation
+    void loadTemplates(UI model) {
+        Object koModel = Models.toRaw(model);
+        assert koModel != null;
+        templates = new Closeable[] {
+            TemplateRegistration.register("avatar", "avatar.html"),
+            TemplateRegistration.register("edit-config", "edit-config.html"),
+            TemplateRegistration.register("edit-contact", "edit-contact.html"),
+            TemplateRegistration.register("list-contacts", "list-contacts.html"),
+            TemplateRegistration.register("list-events", "list-events.html"),
+        };
     }
 
     private static UI uiModel;

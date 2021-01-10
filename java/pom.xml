@@ -19,7 +19,7 @@
         <module>js</module>
     </modules>
     <properties>
-        <net.java.html.version>1.7</net.java.html.version>
+        <net.java.html.version>1.7.1</net.java.html.version>
         <bck2brwsr.version>0.31</bck2brwsr.version>
         <bck2brwsr.obfuscationlevel>FULL</bck2brwsr.obfuscationlevel>
         <junit.browser.version>1.0</junit.browser.version>

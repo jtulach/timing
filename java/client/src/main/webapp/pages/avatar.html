@@ -1,0 +1,7 @@
+<div class="avatar" data-bind="click: $root.chooseContact, with: contact">
+    <div>
+        <span data-bind="text: name">Jméno</span>
+        <img data-bind="visible: imgSrc, attr: { src : imgSrc }" width="96" height="96"/>
+        <i data-bind="visible: !imgSrc()" class="fa fa-address-book" aria-hidden="true"></i>
+    </div>
+</div>

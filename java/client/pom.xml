@@ -206,7 +206,7 @@
     <dependency>
         <groupId>org.openjfx</groupId>
         <artifactId>javafx-web</artifactId>
-        <version>11</version>
+        <version>15.0.1</version>
         <scope>test</scope>
     </dependency>
     <dependency>
@@ -235,7 +235,7 @@
               <dependency>
                   <groupId>org.openjfx</groupId>
                   <artifactId>javafx-web</artifactId>
-                  <version>11</version>
+                  <version>15.0.1</version>
                   <scope>runtime</scope>
               </dependency>
           </dependencies>
