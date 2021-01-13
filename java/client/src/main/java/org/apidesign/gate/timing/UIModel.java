@@ -1,5 +1,6 @@
 package org.apidesign.gate.timing;
 
+import java.util.Collections;
 import org.apidesign.gate.timing.shared.Contact;
 import org.apidesign.gate.timing.shared.Event;
 import java.util.List;
@@ -197,6 +198,13 @@ final class UIModel {
 
         List<Contact> newOrder = Models.asList();
         newOrder.addAll(ui.getContacts());
+        Collections.sort(newOrder, (c1, c2) -> {
+            int nameOrder = c1.getName() == null ? 1 : c1.getName().compareTo(c2.getName());
+            if (nameOrder == 0) {
+                return c1.getId() - c2.getId();
+            }
+            return nameOrder;
+        });
         newOrder.removeAll(used);
         newOrder.addAll(0, used);
         ui.getContacts().clear();
